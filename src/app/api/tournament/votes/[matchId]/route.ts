@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// ✅ 여기에 Props 따로 선언하지 마세요
 export async function GET(
-  req: NextRequest,
-  context: { params: { matchId: string } }
+  request: NextRequest,
+  context: { params: { matchId: string } } // 이거만!
 ) {
   try {
-    const matchId = context.params.matchId;
+    const { matchId } = context.params;
 
     const votes = await prisma.vote.findMany({
       where: { matchId },
