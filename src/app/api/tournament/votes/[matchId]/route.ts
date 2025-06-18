@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { matchId: string } }
-) {
+type Params = { params: { matchId: string } };
+
+export async function GET(request: NextRequest, { params }: Params) {
   try {
-    const { matchId } = context.params;
+    const { matchId } = params;
 
     const votes = await prisma.vote.findMany({
       where: { matchId },
