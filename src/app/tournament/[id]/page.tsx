@@ -239,7 +239,7 @@ export default function TournamentPage({
                 </h3>
                 <p className="text-green-300">
                   All {tournament?.participantCount} slots are filled. Click
-                  'Generate Brackets' to start the tournament.
+                  &apos;Generate Brackets&apos; to start the tournament.
                 </p>
               </div>
             </div>
@@ -346,7 +346,8 @@ export default function TournamentPage({
             <div className="text-center text-gray-400 py-8">
               <p className="text-xl">No participants registered yet.</p>
               <p className="mt-2">
-                Click "Add Participant" to register the first participant.
+                Click &quot;Add Participant&quot; to register the first
+                participant.
               </p>
             </div>
           )}
@@ -492,8 +493,8 @@ export default function TournamentPage({
                         </div>
                       ))}
                     </div>
-                  )
-                )}
+                  ))}
+                </div>
               </div>
             )}
           </div>
