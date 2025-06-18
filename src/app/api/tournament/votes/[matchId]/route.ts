@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+//import { prisma } from "@/lib/prisma";
 
 // Temporarily disabled due to Next.js params type issue
 export async function GET(
