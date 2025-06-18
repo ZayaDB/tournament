@@ -15,6 +15,7 @@ interface Judge {
     status: string;
     participants: Participant[];
     judges: Judge[];
+    matches: Match[];
   };
 }
 
@@ -76,25 +77,11 @@ export default function JudgePanelPage({
 
           // Fetch current match if tournament is ACTIVE
           if (data.judge.tournament.status === "ACTIVE") {
-            const matchesResponse = await fetch(
-              `/api/tournaments/${data.judge.tournament.id}/matches`
+            const activeMatch = data.judge.tournament.matches?.find(
+              (m: Match) => !m.winnerId && m.participants.length === 2
             );
-            if (matchesResponse.ok) {
-              const matches = await matchesResponse.json();
-              const activeMatch = matches.find(
-                (m: Match) => !m.winnerId && m.participants.length === 2
-              );
-              if (activeMatch) {
-                // Fetch votes for current match
-                const votesResponse = await fetch(
-                  `/api/tournament/votes/${activeMatch.id}`
-                );
-                if (votesResponse.ok) {
-                  const votesData = await votesResponse.json();
-                  activeMatch.votes = votesData;
-                }
-                setCurrentMatch(activeMatch);
-              }
+            if (activeMatch) {
+              setCurrentMatch(activeMatch);
             }
           }
         } else {

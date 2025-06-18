@@ -69,32 +69,17 @@ export default function VersusPage({
       if (response.ok) {
         const data = await response.json();
         setMatch(data);
-
-        const votesResponse = await fetch(`/api/tournament/votes/${matchId}`);
-        if (votesResponse.ok) {
-          const votesData = await votesResponse.json();
-          setVotes(votesData);
-
-          // 현재 심사위원의 투표 찾기
-          const judgeId = localStorage.getItem("judgeId");
-          if (judgeId) {
-            const myVoteData = votesData.find(
-              (v: Vote) => v.judgeId === judgeId
-            );
-            setMyVote(myVoteData?.votedFor || null);
-          }
-        }
+        setLoading(false);
       }
     } catch (error) {
       console.error("Error fetching match data:", error);
-    } finally {
       setLoading(false);
     }
   }, [id, matchId]);
 
   useEffect(() => {
     fetchMatchData();
-    const interval = setInterval(fetchMatchData, 3000); // 3초마다 투표 상태 업데이트
+    const interval = setInterval(fetchMatchData, 3000); // 3초마다 매치 상태 업데이트
     return () => clearInterval(interval);
   }, [fetchMatchData]);
 
@@ -103,24 +88,11 @@ export default function VersusPage({
 
     setSelecting(true);
     try {
-      const response = await fetch(`/api/tournament/votes/${matchId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          judgeId: currentJudge.id,
-          votedFor: participantId,
-        }),
-      });
-
-      if (response.ok) {
-        setMyVote(participantId);
-        fetchMatchData();
-      }
+      // TODO: Implement voting logic if needed
+      console.log("Voting functionality temporarily disabled");
+      setSelecting(false);
     } catch (error) {
       console.error("Error voting:", error);
-    } finally {
       setSelecting(false);
     }
   };
