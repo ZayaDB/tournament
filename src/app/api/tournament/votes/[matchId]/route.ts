@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-interface RouteSegmentProps {
-  params: { matchId: string };
-}
-
-export async function GET(req: NextRequest, { params }: RouteSegmentProps) {
+export async function GET(
+  request: Request,
+  { params }: { params: { matchId: string } }
+): Promise<Response> {
   try {
     const { matchId } = params;
 
