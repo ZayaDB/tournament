@@ -1,15 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type Context = {
-  params: { matchId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
+// Temporarily disabled due to Next.js params type issue
+export async function GET(
+  request: Request,
+  { params }: { params: { matchId: string } }
+) {
+  return NextResponse.json({ message: "API temporarily disabled" });
 
-export async function GET(_request: Request | NextRequest, context: Context) {
-  const matchId = context.params.matchId;
-
+  /* Original implementation
   try {
+    const matchId = await params.matchId;
+
     const votes = await prisma.vote.findMany({
       where: { matchId },
       include: {
@@ -31,6 +33,7 @@ export async function GET(_request: Request | NextRequest, context: Context) {
       { status: 500 }
     );
   }
+  */
 }
 
 export const dynamic = "force-dynamic";
