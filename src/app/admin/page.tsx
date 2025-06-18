@@ -158,7 +158,7 @@ export default function AdminPage() {
     try {
       await fetch(`/api/events/${eventId}`, { method: "DELETE" });
       await fetchEvents();
-    } catch (e) {
+    } catch (_e) {
       alert("이벤트 삭제 중 오류 발생");
     }
   };
@@ -169,7 +169,7 @@ export default function AdminPage() {
     try {
       await fetch(`/api/tournaments/${tournamentId}`, { method: "DELETE" });
       await fetchEvents();
-    } catch (e) {
+    } catch (_e) {
       alert("토너먼트 삭제 중 오류 발생");
     }
   };

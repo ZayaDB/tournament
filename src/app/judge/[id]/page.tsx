@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import Image from "next/image";
 
 interface Participant {
@@ -38,11 +38,7 @@ export default function JudgePage({
   const [score, setScore] = useState<number>(5);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchTournamentData();
-  }, [id]);
-
-  const fetchTournamentData = async () => {
+  const fetchTournamentData = useCallback(async () => {
     try {
       // Fetch tournament info
       const tournamentResponse = await fetch(`/api/tournaments/${id}`);
@@ -64,7 +60,11 @@ export default function JudgePage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchTournamentData();
+  }, [fetchTournamentData]);
 
   const handleScoreSubmit = async (participantId: string) => {
     setSubmitting(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -63,13 +63,7 @@ export default function VersusPage({
     }
   }, []);
 
-  useEffect(() => {
-    fetchMatchData();
-    const interval = setInterval(fetchMatchData, 3000); // 3초마다 투표 상태 업데이트
-    return () => clearInterval(interval);
-  }, [matchId]);
-
-  const fetchMatchData = async () => {
+  const fetchMatchData = useCallback(async () => {
     try {
       const response = await fetch(`/api/tournaments/${id}/matches/${matchId}`);
       if (response.ok) {
@@ -96,7 +90,13 @@ export default function VersusPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, matchId]);
+
+  useEffect(() => {
+    fetchMatchData();
+    const interval = setInterval(fetchMatchData, 3000); // 3초마다 투표 상태 업데이트
+    return () => clearInterval(interval);
+  }, [fetchMatchData]);
 
   const handleVote = async (participantId: string) => {
     if (!currentJudge || selecting) return;
