@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type RouteContext = {
-  params: {
-    matchId: string;
-  };
-};
-
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { matchId: string } }
+) {
   try {
     const { matchId } = context.params;
 
