@@ -414,8 +414,8 @@ export default function TournamentPage({
                 </div>
                 <div className="text-center mt-4">
                   <p className="text-gray-400 mb-2">
-                    Click "Generate Brackets" above to create the tournament
-                    bracket
+                    Click &quot;Generate Brackets&quot; above to create the
+                    tournament bracket
                   </p>
                 </div>
               </div>
