@@ -12,17 +12,6 @@ export async function GET(
       where: { id: matchId },
       include: {
         participants: true,
-        tournament: {
-          include: {
-            judges: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
       },
     });
 

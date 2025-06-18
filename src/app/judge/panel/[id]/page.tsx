@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -14,8 +14,6 @@ interface Judge {
     danceStyle: string;
     status: string;
     participants: Participant[];
-    judges: Judge[];
-    matches: Match[];
   };
 }
 
@@ -33,23 +31,12 @@ interface Score {
   judgeId: string;
 }
 
-interface Vote {
-  id: string;
-  judgeId: string;
-  votedFor: string;
-  judge: {
-    name: string;
-    imageUrl: string;
-  };
-}
-
 interface Match {
   id: string;
   round: number;
   matchNumber: number;
   participants: Participant[];
   winnerId: string | null;
-  votes: Vote[];
 }
 
 export default function JudgePanelPage({
@@ -67,44 +54,45 @@ export default function JudgePanelPage({
   const [voting, setVoting] = useState(false);
   const router = useRouter();
 
-  const fetchJudgeData = useCallback(
-    async (judgeId: string) => {
-      try {
-        const response = await fetch(`/api/judges/${judgeId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setJudge(data.judge);
-
-          // Fetch current match if tournament is ACTIVE
-          if (data.judge.tournament.status === "ACTIVE") {
-            const activeMatch = data.judge.tournament.matches?.find(
-              (m: Match) => !m.winnerId && m.participants.length === 2
-            );
-            if (activeMatch) {
-              setCurrentMatch(activeMatch);
-            }
-          }
-        } else {
-          console.error("Failed to fetch judge data");
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error fetching judge data:", error);
-        router.push("/");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [router]
-  );
-
   useEffect(() => {
     const unwrapParams = async () => {
       const { id } = await params;
       fetchJudgeData(id);
     };
     unwrapParams();
-  }, [params, fetchJudgeData]);
+  }, [params, router]);
+
+  const fetchJudgeData = async (judgeId: string) => {
+    try {
+      const response = await fetch(`/api/judges/${judgeId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setJudge(data.judge);
+
+        // Fetch current match if tournament is ACTIVE
+        if (data.judge.tournament.status === "ACTIVE") {
+          const matchesResponse = await fetch(
+            `/api/tournaments/${data.judge.tournament.id}/matches`
+          );
+          if (matchesResponse.ok) {
+            const matches = await matchesResponse.json();
+            const activeMatch = matches.find(
+              (m: Match) => !m.winnerId && m.participants.length === 2
+            );
+            setCurrentMatch(activeMatch);
+          }
+        }
+      } else {
+        console.error("Failed to fetch judge data");
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error fetching judge data:", error);
+      router.push("/");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleScoreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,10 +307,7 @@ export default function JudgePanelPage({
                 </p>
                 <button
                   onClick={() => handleVote(currentMatch.participants[0].id)}
-                  disabled={
-                    voting ||
-                    currentMatch.votes?.some((v) => v.judgeId === judge.id)
-                  }
+                  disabled={voting}
                   className="mt-4 w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium text-sm"
                 >
                   {voting ? "투표 중..." : "승자로 선택"}
@@ -330,51 +315,7 @@ export default function JudgePanelPage({
               </div>
 
               {/* VS */}
-              <div className="flex flex-col items-center gap-4">
-                <div className="text-4xl font-bold text-yellow-500">VS</div>
-                {/* Judges Votes */}
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-sm font-medium text-gray-400">
-                    심사위원 투표
-                  </p>
-                  <div className="flex gap-2">
-                    {judge.tournament.judges.map((j) => {
-                      const vote = currentMatch.votes?.find(
-                        (v) => v.judgeId === j.id
-                      );
-                      const votedColor = vote
-                        ? vote.votedFor === currentMatch.participants[0].id
-                          ? "bg-red-500"
-                          : "bg-blue-500"
-                        : "bg-gray-600";
-                      return (
-                        <div
-                          key={j.id}
-                          className={`w-8 h-8 rounded-full ${votedColor} flex items-center justify-center`}
-                          title={`${j.name}${
-                            vote
-                              ? vote.votedFor ===
-                                currentMatch.participants[0].id
-                                ? " - Red"
-                                : " - Blue"
-                              : " - 미투표"
-                          }`}
-                        >
-                          <div className="w-6 h-6 rounded-full overflow-hidden">
-                            <Image
-                              src={j.imageUrl}
-                              alt={j.name}
-                              width={24}
-                              height={24}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              <div className="text-4xl font-bold text-yellow-500">VS</div>
 
               {/* Blue Corner */}
               <div className="flex-1 bg-blue-900/30 rounded-lg p-4 text-center">
@@ -394,10 +335,7 @@ export default function JudgePanelPage({
                 </p>
                 <button
                   onClick={() => handleVote(currentMatch.participants[1].id)}
-                  disabled={
-                    voting ||
-                    currentMatch.votes?.some((v) => v.judgeId === judge.id)
-                  }
+                  disabled={voting}
                   className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium text-sm"
                 >
                   {voting ? "투표 중..." : "승자로 선택"}

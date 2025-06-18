@@ -23,13 +23,6 @@ export async function GET(
                 registrationNumber: "asc",
               },
             },
-            judges: {
-              select: {
-                id: true,
-                name: true,
-                imageUrl: true,
-              },
-            },
           },
         },
       },

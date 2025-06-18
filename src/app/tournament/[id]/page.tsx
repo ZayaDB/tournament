@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use, useCallback } from "react";
+import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -55,7 +55,23 @@ export default function TournamentPage({
   const showBracketView = hasMatchesWithParticipants || isFullTournament;
   const canGenerateBrackets = tournament?.status === "READY_TO_BRACKET";
 
-  const fetchTournamentData = useCallback(async () => {
+  useEffect(() => {
+    fetchTournamentData();
+  }, [id]);
+
+  // Auto-generate brackets when we have exactly the required number of participants
+  useEffect(() => {
+    if (
+      tournament &&
+      participants.length === tournament.participantCount &&
+      tournament.status === "PENDING" &&
+      !hasMatchesWithParticipants
+    ) {
+      generateBrackets();
+    }
+  }, [tournament, participants.length, hasMatchesWithParticipants]);
+
+  const fetchTournamentData = async () => {
     try {
       // Fetch tournament info
       const tournamentResponse = await fetch(`/api/tournaments/${id}`);
@@ -84,9 +100,9 @@ export default function TournamentPage({
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  };
 
-  const generateBrackets = useCallback(async () => {
+  const generateBrackets = async () => {
     setGeneratingBrackets(true);
     try {
       const adminToken = localStorage.getItem("adminToken");
@@ -112,28 +128,7 @@ export default function TournamentPage({
     } finally {
       setGeneratingBrackets(false);
     }
-  }, [id]);
-
-  useEffect(() => {
-    fetchTournamentData();
-  }, [fetchTournamentData]);
-
-  // Auto-generate brackets when we have exactly the required number of participants
-  useEffect(() => {
-    if (
-      tournament &&
-      participants.length === tournament.participantCount &&
-      tournament.status === "PENDING" &&
-      !hasMatchesWithParticipants
-    ) {
-      generateBrackets();
-    }
-  }, [
-    tournament,
-    participants.length,
-    hasMatchesWithParticipants,
-    generateBrackets,
-  ]);
+  };
 
   const handleParticipantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +234,7 @@ export default function TournamentPage({
                 </h3>
                 <p className="text-green-300">
                   All {tournament?.participantCount} slots are filled. Click
-                  &apos;Generate Brackets&apos; to start the tournament.
+                  'Generate Brackets' to start the tournament.
                 </p>
               </div>
             </div>
@@ -346,8 +341,7 @@ export default function TournamentPage({
             <div className="text-center text-gray-400 py-8">
               <p className="text-xl">No participants registered yet.</p>
               <p className="mt-2">
-                Click &quot;Add Participant&quot; to register the first
-                participant.
+                Click "Add Participant" to register the first participant.
               </p>
             </div>
           )}
@@ -393,7 +387,7 @@ export default function TournamentPage({
                   All Participants Ready for Tournament
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                  {participants.map((participant) => (
+                  {participants.map((participant, index) => (
                     <div
                       key={participant.id}
                       className="bg-gray-700 rounded-lg p-3 text-center"
@@ -415,8 +409,8 @@ export default function TournamentPage({
                 </div>
                 <div className="text-center mt-4">
                   <p className="text-gray-400 mb-2">
-                    Click &quot;Generate Brackets&quot; above to create the
-                    tournament bracket
+                    Click "Generate Brackets" above to create the tournament
+                    bracket
                   </p>
                 </div>
               </div>
@@ -513,41 +507,6 @@ export default function TournamentPage({
                 ? tournament.participantCount - participants.length
                 : 0}{" "}
               more participants to start the tournament bracket.
-            </p>
-          </div>
-        )}
-
-        {/* Show message when no participants */}
-        {!hasParticipants && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🎭</div>
-            <h2 className="text-2xl font-semibold mb-4">No Participants Yet</h2>
-            <p className="text-gray-400">
-              Participants need to register before you can score them.
-            </p>
-          </div>
-        )}
-
-        {/* Show message when brackets cannot be generated */}
-        {!canGenerateBrackets && (
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold mb-4">
-              Can&apos;t generate brackets yet
-            </h2>
-            <p className="text-gray-400">
-              Please wait for judges to complete preselection.
-            </p>
-          </div>
-        )}
-
-        {/* Show message when tournament cannot start */}
-        {!hasMatchesWithParticipants && (
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold mb-4">
-              Can&apos;t start tournament yet
-            </h2>
-            <p className="text-gray-400">
-              Please wait for all participants to register.
             </p>
           </div>
         )}
