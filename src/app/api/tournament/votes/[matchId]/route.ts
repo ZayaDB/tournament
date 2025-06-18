@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { matchId: string } }
-) {
+interface RouteSegmentProps {
+  params: { matchId: string };
+}
+
+export async function GET(req: NextRequest, { params }: RouteSegmentProps) {
   try {
-    const { matchId } = context.params;
+    const { matchId } = params;
 
     const votes = await prisma.vote.findMany({
       where: { matchId },
@@ -30,3 +31,6 @@ export async function GET(
     );
   }
 }
+
+// Route segment config
+export const dynamic = "force-dynamic";
