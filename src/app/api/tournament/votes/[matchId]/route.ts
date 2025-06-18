@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  req: NextRequest,
-  context: { params: { matchId: string } }
-) {
+type Context = {
+  params: { matchId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export async function GET(_request: Request | NextRequest, context: Context) {
   const matchId = context.params.matchId;
 
   try {
