@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Event {
+  id          String       @id @default(uuid())
+  name        String
+  date        DateTime
+  status      String       @default("ACTIVE") // ACTIVE, COMPLETED
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tournaments Tournament[]
+}
+
+model Tournament {
+  id                    String        @id @default(uuid())
+  name                  String?
+  danceStyle           String
+  participantCount     Int
+  status               String        @default("PENDING") // PENDING, PRESELECTION, READY_TO_BRACKET, ACTIVE, COMPLETED
+  eventId              String
+  event                Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  matches              Match[]
+  participants         Participant[]
+  scores               Score[]
+  judges               Judge[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  nextRegistrationNumber Int         @default(1)
+
+  @@index([eventId])
+}
+
+model Participant {
+  id                String     @id @default(uuid())
+  name              String
+  imageUrl          String
+  registrationNumber Int
+  tournamentId      String
+  tournament        Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  matches           Match[]
+  scores            Score[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([tournamentId])
+}
+
+model Match {
+  id           String        @id @default(uuid())
+  round        Int
+  matchNumber  Int
+  tournamentId String
+  tournament   Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  participants Participant[]
+  winnerId     String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Score {
+  id            String      @id @default(uuid())
+  value         Int
+  judgeId       String
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  tournamentId  String
+  tournament    Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  judgeId     String
+  judge       Judge    @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  matchId     String
+  votedFor    String   // participantId
+  createdAt   DateTime @default(now())
+}
+
+model Judge {
+  id            String   @id @default(uuid())
+  name          String
+  imageUrl      String
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  votes         Vote[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tournamentId])
+}
