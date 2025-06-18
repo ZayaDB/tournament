@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// context: { params: { matchId: string } }
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   context: { params: { matchId: string } }
-): Promise<NextResponse> {
+) {
   try {
-    const { matchId } = context.params;
+    const matchId = context.params.matchId;
 
     const votes = await prisma.vote.findMany({
       where: { matchId },
@@ -32,5 +31,4 @@ export async function GET(
   }
 }
 
-// Route segment config
 export const dynamic = "force-dynamic";
