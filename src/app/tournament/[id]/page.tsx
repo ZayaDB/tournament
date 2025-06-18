@@ -493,8 +493,8 @@ export default function TournamentPage({
                         </div>
                       ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                )}
               </div>
             )}
           </div>
@@ -517,31 +517,40 @@ export default function TournamentPage({
           </div>
         )}
 
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">🎭</div>
-          <h2 className="text-2xl font-semibold mb-4">No Participants Yet</h2>
-          <p className="text-gray-400">
-            Participants need to register before you can score them.
-          </p>
-        </div>
+        {/* Show message when no participants */}
+        {!hasParticipants && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🎭</div>
+            <h2 className="text-2xl font-semibold mb-4">No Participants Yet</h2>
+            <p className="text-gray-400">
+              Participants need to register before you can score them.
+            </p>
+          </div>
+        )}
 
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            Can&apos;t generate brackets yet
-          </h2>
-          <p className="text-gray-400">
-            Please wait for judges to complete preselection.
-          </p>
-        </div>
+        {/* Show message when brackets cannot be generated */}
+        {!canGenerateBrackets && (
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold mb-4">
+              Can&apos;t generate brackets yet
+            </h2>
+            <p className="text-gray-400">
+              Please wait for judges to complete preselection.
+            </p>
+          </div>
+        )}
 
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            Can&apos;t start tournament yet
-          </h2>
-          <p className="text-gray-400">
-            Please wait for all participants to register.
-          </p>
-        </div>
+        {/* Show message when tournament cannot start */}
+        {!hasMatchesWithParticipants && (
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-semibold mb-4">
+              Can&apos;t start tournament yet
+            </h2>
+            <p className="text-gray-400">
+              Please wait for all participants to register.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
