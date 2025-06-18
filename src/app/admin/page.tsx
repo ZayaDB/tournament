@@ -127,25 +127,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleViewParticipants = async (tournament: Tournament) => {
-    try {
-      // Fetch participants for this tournament
-      const response = await fetch(
-        `/api/tournaments/${tournament.id}/participants`
-      );
-      if (response.ok) {
-        const participants = await response.json();
-        setSelectedTournament({
-          ...tournament,
-          participants: participants,
-        });
-        setShowParticipantsModal(true);
-      }
-    } catch (error) {
-      console.error("Error fetching participants:", error);
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("adminMode");
     localStorage.removeItem("adminToken");

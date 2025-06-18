@@ -392,7 +392,7 @@ export default function TournamentPage({
                   All Participants Ready for Tournament
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                  {participants.map((participant, index) => (
+                  {participants.map((participant) => (
                     <div
                       key={participant.id}
                       className="bg-gray-700 rounded-lg p-3 text-center"
