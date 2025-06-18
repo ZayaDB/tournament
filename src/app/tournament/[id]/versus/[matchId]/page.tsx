@@ -43,11 +43,9 @@ export default function VersusPage({
   const { id, matchId } = use(params);
   const router = useRouter();
   const [match, setMatch] = useState<Match | null>(null);
-  const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecting, setSelecting] = useState(false);
   const [currentJudge, setCurrentJudge] = useState<Judge | null>(null);
-  const [myVote, setMyVote] = useState<string | null>(null);
 
   useEffect(() => {
     const judgeId = localStorage.getItem("judgeId");
@@ -79,16 +77,15 @@ export default function VersusPage({
 
   useEffect(() => {
     fetchMatchData();
-    const interval = setInterval(fetchMatchData, 3000); // 3초마다 매치 상태 업데이트
+    const interval = setInterval(fetchMatchData, 3000);
     return () => clearInterval(interval);
   }, [fetchMatchData]);
 
-  const handleVote = async (participantId: string) => {
+  const handleVote = async () => {
     if (!currentJudge || selecting) return;
 
     setSelecting(true);
     try {
-      // TODO: Implement voting logic if needed
       console.log("Voting functionality temporarily disabled");
       setSelecting(false);
     } catch (error) {
@@ -167,7 +164,7 @@ export default function VersusPage({
           <p className="text-xl text-gray-400">Match {match.matchNumber}</p>
           {isJudge && (
             <p className="mt-4 text-lg text-yellow-400">
-              {myVote ? "투표 완료" : "투표해주세요!"}
+              투표 기능이 일시적으로 비활성화되었습니다
             </p>
           )}
         </div>
@@ -177,7 +174,7 @@ export default function VersusPage({
           <div className="flex-1 max-w-md">
             <div
               className={`rounded-lg p-6 text-center ${
-                myVote === player1.id
+                currentJudge && currentJudge.id === player1.id
                   ? "bg-red-900/50 ring-2 ring-red-500"
                   : "bg-red-900/30"
               }`}
@@ -196,23 +193,11 @@ export default function VersusPage({
               </p>
               {isJudge ? (
                 <button
-                  onClick={() => handleVote(player1.id)}
-                  disabled={selecting || myVote !== null}
-                  className={`w-full px-6 py-3 rounded-lg text-lg font-semibold ${
-                    myVote === player1.id
-                      ? "bg-red-500 cursor-default"
-                      : myVote
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700"
-                  }`}
+                  onClick={handleVote}
+                  disabled={selecting}
+                  className="w-full bg-gray-600 cursor-not-allowed px-6 py-3 rounded-lg text-lg font-semibold"
                 >
-                  {myVote === player1.id
-                    ? "투표 완료"
-                    : myVote
-                    ? "다른 선수 선택됨"
-                    : selecting
-                    ? "투표 중..."
-                    : "이 선수에게 투표"}
+                  투표 기능이 비활성화되었습니다
                 </button>
               ) : (
                 <button
@@ -232,29 +217,17 @@ export default function VersusPage({
 
             {/* Judges Votes */}
             <div className="flex flex-col items-center gap-2">
-              <p className="text-lg font-medium text-gray-400">심사위원 투표</p>
+              <p className="text-lg font-medium text-gray-400">심사위원</p>
               <div className="flex gap-3">
                 {match.tournament.judges.map((judge) => {
-                  const vote = votes.find((v) => v.judgeId === judge.id);
                   const isCurrentJudge = judge.id === currentJudge?.id;
-                  const votedColor = vote
-                    ? vote.votedFor === player1.id
-                      ? "bg-red-500"
-                      : "bg-blue-500"
-                    : "bg-gray-600";
                   return (
                     <div
                       key={judge.id}
-                      className={`w-12 h-12 rounded-full ${votedColor} flex items-center justify-center ${
+                      className={`w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center ${
                         isCurrentJudge ? "ring-2 ring-yellow-400" : ""
                       }`}
-                      title={`${judge.name}${isCurrentJudge ? " (나)" : ""}${
-                        vote
-                          ? vote.votedFor === player1.id
-                            ? " - Red"
-                            : " - Blue"
-                          : " - 미투표"
-                      }`}
+                      title={`${judge.name}${isCurrentJudge ? " (나)" : ""}`}
                     >
                       <div className="w-10 h-10 rounded-full overflow-hidden">
                         <Image
@@ -276,7 +249,7 @@ export default function VersusPage({
           <div className="flex-1 max-w-md">
             <div
               className={`rounded-lg p-6 text-center ${
-                myVote === player2.id
+                currentJudge && currentJudge.id === player2.id
                   ? "bg-blue-900/50 ring-2 ring-blue-500"
                   : "bg-blue-900/30"
               }`}
@@ -295,23 +268,11 @@ export default function VersusPage({
               </p>
               {isJudge ? (
                 <button
-                  onClick={() => handleVote(player2.id)}
-                  disabled={selecting || myVote !== null}
-                  className={`w-full px-6 py-3 rounded-lg text-lg font-semibold ${
-                    myVote === player2.id
-                      ? "bg-blue-500 cursor-default"
-                      : myVote
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                  onClick={handleVote}
+                  disabled={selecting}
+                  className="w-full bg-gray-600 cursor-not-allowed px-6 py-3 rounded-lg text-lg font-semibold"
                 >
-                  {myVote === player2.id
-                    ? "투표 완료"
-                    : myVote
-                    ? "다른 선수 선택됨"
-                    : selecting
-                    ? "투표 중..."
-                    : "이 선수에게 투표"}
+                  투표 기능이 비활성화되었습니다
                 </button>
               ) : (
                 <button
