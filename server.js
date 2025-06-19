@@ -10,10 +10,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 app.use(
   cors({
-    origin: [
-      "https://tournament-production-4613.up.railway.app",
-      "http://localhost:3000",
-    ],
+    origin: ["https://mgldancers.netlify.app", "http://localhost:3000"],
     credentials: true,
   })
 );
