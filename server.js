@@ -10,7 +10,10 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 app.use(
   cors({
-    origin: ["https://mgldancers.netlify.app", "http://localhost:3000"],
+    origin: [
+      "https://tournament-production-4613.up.railway.app",
+      "http://localhost:3000",
+    ],
     credentials: true,
   })
 );
@@ -33,6 +36,10 @@ app.get("/api/images/:filename", (req, res) => {
     return res.status(404).json({ error: "Image not found" });
   }
   res.sendFile(imagePath);
+});
+
+app.get("/", (req, res) => {
+  res.send("Railway 이미지 API 서버가 정상 동작 중입니다.");
 });
 
 const PORT = process.env.PORT || 8080;
