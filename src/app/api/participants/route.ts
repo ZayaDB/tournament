@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { writeFile } from "fs/promises";
-import { join } from "path";
+
+const RAILWAY_API_URL =
+  process.env.RAILWAY_API_URL ||
+  "https://tournament-production-4613.up.railway.app";
 
 export async function POST(request: Request) {
   try {
@@ -17,11 +19,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save image to public directory
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const imagePath = `/uploads/${Date.now()}-${image.name}`;
-    await writeFile(join(process.cwd(), "public", imagePath), buffer);
+    // Upload image to Railway server
+    const uploadFormData = new FormData();
+    uploadFormData.append("image", image);
+
+    const uploadResponse = await fetch(`${RAILWAY_API_URL}/api/upload`, {
+      method: "POST",
+      body: uploadFormData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload image to Railway");
+    }
+
+    const uploadResult = await uploadResponse.json();
+    const imageUrl = `${RAILWAY_API_URL}/api/images/${uploadResult.filename}`;
 
     // Get the next registration number and create participant in a transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -32,7 +44,7 @@ export async function POST(request: Request) {
       const participant = await tx.participant.create({
         data: {
           name,
-          imageUrl: imagePath,
+          imageUrl,
           registrationNumber: tournament.nextRegistrationNumber,
           tournamentId,
         },
