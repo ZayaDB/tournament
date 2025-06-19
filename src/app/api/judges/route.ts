@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const RAILWAY_API_URL =
+  process.env.RAILWAY_API_URL ||
+  "https://tournament-production-4613.up.railway.app";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,15 +39,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save image
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const imageName = `judge-${Date.now()}-${image.name}`;
-    const imagePath = join(process.cwd(), "public", "uploads", imageName);
-    await writeFile(imagePath, buffer);
-    const imageUrl = `/uploads/${imageName}`;
-
-    console.log("Image saved:", imageUrl);
+    // 이미지 Railway 서버로 업로드
+    const uploadFormData = new FormData();
+    uploadFormData.append("image", image);
+    const uploadResponse = await fetch(`${RAILWAY_API_URL}/api/upload`, {
+      method: "POST",
+      body: uploadFormData,
+    });
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload image to Railway");
+    }
+    const uploadResult = await uploadResponse.json();
+    const imageUrl = `${RAILWAY_API_URL}/api/images/${uploadResult.filename}`;
 
     // Create judge in database
     const judge = await prisma.judge.create({
