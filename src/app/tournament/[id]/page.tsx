@@ -234,7 +234,7 @@ export default function TournamentPage({
                 </h3>
                 <p className="text-green-300">
                   All {tournament?.participantCount} slots are filled. Click
-                  'Generate Brackets' to start the tournament.
+                  &apos;Generate Brackets&apos; to start the tournament.
                 </p>
               </div>
             </div>
@@ -341,7 +341,8 @@ export default function TournamentPage({
             <div className="text-center text-gray-400 py-8">
               <p className="text-xl">No participants registered yet.</p>
               <p className="mt-2">
-                Click "Add Participant" to register the first participant.
+                Click &quot;Add Participant&quot; to register the first
+                participant.
               </p>
             </div>
           )}
@@ -387,7 +388,7 @@ export default function TournamentPage({
                   All Participants Ready for Tournament
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                  {participants.map((participant, index) => (
+                  {participants.map((participant) => (
                     <div
                       key={participant.id}
                       className="bg-gray-700 rounded-lg p-3 text-center"
@@ -409,8 +410,8 @@ export default function TournamentPage({
                 </div>
                 <div className="text-center mt-4">
                   <p className="text-gray-400 mb-2">
-                    Click "Generate Brackets" above to create the tournament
-                    bracket
+                    Click &quot;Generate Brackets&quot; above to create the
+                    tournament bracket
                   </p>
                 </div>
               </div>
