@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -54,45 +54,48 @@ export default function JudgePanelPage({
   const [voting, setVoting] = useState(false);
   const router = useRouter();
 
+  const fetchJudgeData = useCallback(
+    async (judgeId: string) => {
+      try {
+        const response = await fetch(`/api/judges/${judgeId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setJudge(data.judge);
+
+          // Fetch current match if tournament is ACTIVE
+          if (data.judge.tournament.status === "ACTIVE") {
+            const matchesResponse = await fetch(
+              `/api/tournaments/${data.judge.tournament.id}/matches`
+            );
+            if (matchesResponse.ok) {
+              const matches = await matchesResponse.json();
+              const activeMatch = matches.find(
+                (m: Match) => !m.winnerId && m.participants.length === 2
+              );
+              setCurrentMatch(activeMatch);
+            }
+          }
+        } else {
+          console.error("Failed to fetch judge data");
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Error fetching judge data:", error);
+        router.push("/");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router]
+  );
+
   useEffect(() => {
     const unwrapParams = async () => {
       const { id } = await params;
       fetchJudgeData(id);
     };
     unwrapParams();
-  }, [params, router]);
-
-  const fetchJudgeData = async (judgeId: string) => {
-    try {
-      const response = await fetch(`/api/judges/${judgeId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setJudge(data.judge);
-
-        // Fetch current match if tournament is ACTIVE
-        if (data.judge.tournament.status === "ACTIVE") {
-          const matchesResponse = await fetch(
-            `/api/tournaments/${data.judge.tournament.id}/matches`
-          );
-          if (matchesResponse.ok) {
-            const matches = await matchesResponse.json();
-            const activeMatch = matches.find(
-              (m: Match) => !m.winnerId && m.participants.length === 2
-            );
-            setCurrentMatch(activeMatch);
-          }
-        }
-      } else {
-        console.error("Failed to fetch judge data");
-        router.push("/");
-      }
-    } catch (error) {
-      console.error("Error fetching judge data:", error);
-      router.push("/");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [params, router, fetchJudgeData]);
 
   const handleScoreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

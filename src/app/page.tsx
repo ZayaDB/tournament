@@ -34,7 +34,7 @@ export default function Home() {
       } else {
         setAuthError("Invalid password");
       }
-    } catch (error) {
+    } catch {
       setAuthError("Authentication failed");
     }
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -30,11 +30,7 @@ export default function VersusPage({
   const [loading, setLoading] = useState(true);
   const [selecting, setSelecting] = useState(false);
 
-  useEffect(() => {
-    fetchMatchData();
-  }, [matchId]);
-
-  const fetchMatchData = async () => {
+  const fetchMatchData = useCallback(async () => {
     try {
       const response = await fetch(`/api/tournaments/${id}/matches/${matchId}`);
       if (response.ok) {
@@ -46,7 +42,11 @@ export default function VersusPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, matchId]);
+
+  useEffect(() => {
+    fetchMatchData();
+  }, [fetchMatchData]);
 
   const handleSelectWinner = async (winnerId: string) => {
     if (!match || selecting) return;

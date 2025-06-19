@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -55,23 +55,7 @@ export default function TournamentPage({
   const showBracketView = hasMatchesWithParticipants || isFullTournament;
   const canGenerateBrackets = tournament?.status === "READY_TO_BRACKET";
 
-  useEffect(() => {
-    fetchTournamentData();
-  }, [id]);
-
-  // Auto-generate brackets when we have exactly the required number of participants
-  useEffect(() => {
-    if (
-      tournament &&
-      participants.length === tournament.participantCount &&
-      tournament.status === "PENDING" &&
-      !hasMatchesWithParticipants
-    ) {
-      generateBrackets();
-    }
-  }, [tournament, participants.length, hasMatchesWithParticipants]);
-
-  const fetchTournamentData = async () => {
+  const fetchTournamentData = useCallback(async () => {
     try {
       // Fetch tournament info
       const tournamentResponse = await fetch(`/api/tournaments/${id}`);
@@ -100,9 +84,9 @@ export default function TournamentPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const generateBrackets = async () => {
+  const generateBrackets = useCallback(async () => {
     setGeneratingBrackets(true);
     try {
       const adminToken = localStorage.getItem("adminToken");
@@ -128,7 +112,28 @@ export default function TournamentPage({
     } finally {
       setGeneratingBrackets(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchTournamentData();
+  }, [fetchTournamentData]);
+
+  // Auto-generate brackets when we have exactly the required number of participants
+  useEffect(() => {
+    if (
+      tournament &&
+      participants.length === tournament.participantCount &&
+      tournament.status === "PENDING" &&
+      !hasMatchesWithParticipants
+    ) {
+      generateBrackets();
+    }
+  }, [
+    tournament,
+    participants.length,
+    hasMatchesWithParticipants,
+    generateBrackets,
+  ]);
 
   const handleParticipantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
