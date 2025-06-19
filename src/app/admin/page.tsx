@@ -4,6 +4,20 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Crown,
+  Plus,
+  Trash2,
+  Users,
+  Calendar,
+  Trophy,
+  LogOut,
+  Settings,
+  Sparkles,
+  Zap,
+  Flame,
+} from "lucide-react";
 
 interface Event {
   id: string;
@@ -202,218 +216,466 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8 flex items-center justify-center">
-        <div className="text-2xl">Loading admin panel...</div>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-purple-400 rounded-full"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  y: [0, -100, 0],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: Math.random() * 3 + 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="relative z-10"
+        >
+          <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full" />
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Admin Panel</h1>
-            <p className="text-gray-300">Manage events and tournaments</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Logout
-          </button>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 left-0 w-full h-full">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-purple-400 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [0, -100, 0],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: Math.random() * 3 + 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => setShowCreateEventModal(true)}
-            className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Create Event
-          </button>
-        </div>
-
-        {/* Events List */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Events</h2>
-          {events.length === 0 ? (
-            <div className="text-center py-8 bg-gray-800 rounded-lg">
-              <p className="text-gray-400">No events created yet.</p>
-            </div>
-          ) : (
-            events.map((event) => (
-              <div
-                key={event.id}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 glass-dark border-b border-purple-500/30"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="text-4xl"
               >
-                <div className="flex justify-between items-start mb-4">
+                👑
+              </motion.div>
+              <div>
+                <h1 className="text-3xl font-orbitron font-black neon-text text-purple-400">
+                  ADMIN PANEL
+                </h1>
+                <p className="text-gray-300 font-rajdhani">
+                  Manage your legendary tournaments
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: "spring" }}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
+                <Zap className="w-5 h-5 text-cyan-400 animate-pulse" />
+                <Flame className="w-5 h-5 text-orange-400 animate-pulse" />
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="btn-neon"
+                style={{
+                  background: "linear-gradient(45deg, #ef4444, #dc2626)",
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                }}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                LOGOUT
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        {/* Action buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="flex flex-wrap gap-4 mb-8"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCreateEventModal(true)}
+            className="btn-neon glow-purple"
+            style={{
+              background:
+                "linear-gradient(45deg, var(--neon-purple), var(--neon-pink))",
+            }}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            CREATE EVENT
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCreateTournamentModal(true)}
+            className="btn-neon glow"
+          >
+            <Trophy className="w-5 h-5 mr-2" />
+            CREATE TOURNAMENT
+          </motion.button>
+        </motion.div>
+
+        {/* Events list */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="space-y-8"
+        >
+          {events.map((event) => (
+            <div key={event.id} className="card-neon spotlight">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="text-3xl"
+                  >
+                    🎪
+                  </motion.div>
                   <div>
-                    <h3 className="text-xl font-semibold text-purple-400">
+                    <h2 className="text-2xl font-orbitron font-bold text-cyan-400 neon-text">
                       {event.name}
-                    </h3>
-                    <p className="text-gray-400">
-                      Date: {new Date(event.date).toLocaleDateString()}
+                    </h2>
+                    <p className="text-gray-300 font-rajdhani flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {new Date(event.date).toLocaleDateString()}
                     </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link
-                      href="/judge/register"
-                      className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      Judge
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      Delete Event
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedEventId(event.id);
-                        setShowCreateTournamentModal(true);
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      Add Tournament
-                    </button>
                   </div>
                 </div>
 
-                {event.tournaments.length === 0 ? (
-                  <p className="text-gray-400 italic">
-                    No tournaments in this event.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {event.tournaments.map((tournament) => (
-                      <div
-                        key={tournament.id}
-                        className="bg-gray-700 rounded-lg p-4"
-                      >
-                        <h4 className="font-semibold mb-2">
-                          {tournament.name}
-                        </h4>
-                        <p className="text-sm text-gray-300 mb-2">
-                          {tournament.danceStyle}
-                        </p>
-                        <p className="text-sm text-gray-400 mb-3">
-                          {tournament.participantCount} participants
-                        </p>
-                        <div className="flex justify-between items-center mb-3">
-                          <span
-                            className={`text-xs px-2 py-1 rounded ${
-                              tournament.status === "ACTIVE"
-                                ? "bg-green-600 text-green-100"
-                                : tournament.status === "READY_TO_BRACKET"
-                                ? "bg-purple-600 text-purple-100"
-                                : tournament.status === "PRESELECTION"
-                                ? "bg-yellow-600 text-yellow-100"
-                                : "bg-gray-600 text-gray-100"
-                            }`}
-                          >
-                            {tournament.status === "READY_TO_BRACKET"
-                              ? "Ready for Brackets"
-                              : tournament.status === "PRESELECTION"
-                              ? "Preselection"
-                              : tournament.status}
-                          </span>
-                          <div className="flex gap-2">
-                            <Link
-                              href={`/tournament/${tournament.id}`}
-                              className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                            >
-                              View Participants
-                            </Link>
-                            <button
-                              onClick={() =>
-                                handleDeleteTournament(tournament.id)
-                              }
-                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleDeleteEvent(event.id)}
+                  className="btn-neon"
+                  style={{
+                    background: "linear-gradient(45deg, #ef4444, #dc2626)",
+                    padding: "8px 16px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  DELETE
+                </motion.button>
+              </div>
+
+              {/* Tournaments */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {event.tournaments.map((tournament) => (
+                  <div
+                    key={tournament.id}
+                    className="glass border border-purple-500/30 rounded-xl p-6"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 10,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          className="text-2xl"
+                        >
+                          🏆
+                        </motion.div>
+                        <div>
+                          <h3 className="text-lg font-orbitron font-bold text-purple-400">
+                            {tournament.name}
+                          </h3>
+                          <p className="text-sm text-gray-400 font-rajdhani">
+                            {tournament.danceStyle}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+                    </div>
 
-        {/* Create Event Modal */}
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">Participants:</span>
+                        <span className="text-cyan-400 font-bold">
+                          {tournament.participantCount}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">Status:</span>
+                        <span
+                          className={`font-bold ${
+                            tournament.status === "READY_TO_BRACKET"
+                              ? "text-green-400"
+                              : tournament.status === "BRACKET_GENERATED"
+                              ? "text-orange-400"
+                              : "text-yellow-400"
+                          }`}
+                        >
+                          {tournament.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setSelectedTournament(tournament);
+                          setShowParticipantsModal(true);
+                        }}
+                        className="btn-neon flex-1"
+                        style={{
+                          background:
+                            "linear-gradient(45deg, var(--neon-blue), var(--neon-purple))",
+                          padding: "8px 12px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <Users className="w-4 h-4 mr-1" />
+                        VIEW
+                      </motion.button>
+
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeleteTournament(tournament.id)}
+                        className="btn-neon"
+                        style={{
+                          background:
+                            "linear-gradient(45deg, #ef4444, #dc2626)",
+                          padding: "8px 12px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+
+                    {tournament.status === "READY_TO_BRACKET" && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleGenerateBrackets(tournament.id)}
+                        className="btn-neon w-full mt-3 glow"
+                        style={{
+                          background:
+                            "linear-gradient(45deg, #10b981, #059669)",
+                          padding: "8px 12px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        GENERATE BRACKETS
+                      </motion.button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Create Event Modal */}
+      <AnimatePresence>
         {showCreateEventModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-2xl font-bold mb-4">Create New Event</h2>
-              <form onSubmit={handleCreateEvent} className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="glass-dark rounded-2xl p-8 max-w-md w-full border border-purple-500/30"
+            >
+              <div className="text-center mb-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="text-4xl mb-4"
+                >
+                  🎪
+                </motion.div>
+                <h2 className="text-3xl font-orbitron font-bold neon-text text-purple-400">
+                  CREATE EVENT
+                </h2>
+              </div>
+
+              <form onSubmit={handleCreateEvent} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-rajdhani font-medium mb-3 text-gray-300">
                     Event Name
                   </label>
                   <input
                     type="text"
                     value={eventName}
                     onChange={(e) => setEventName(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-green-500"
+                    className="input-neon w-full"
+                    placeholder="Enter event name"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-rajdhani font-medium mb-3 text-gray-300">
                     Event Date
                   </label>
                   <input
                     type="date"
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-green-500"
+                    className="input-neon w-full"
                     required
                   />
                 </div>
+
                 <div className="flex gap-4">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     type="submit"
-                    className="flex-1 bg-green-600 hover:bg-green-700 p-3 rounded-lg font-semibold"
-                  >
-                    Create Event
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreateEventModal(false);
-                      setEventName("");
-                      setEventDate("");
+                    className="flex-1 btn-neon glow-purple"
+                    style={{
+                      background:
+                        "linear-gradient(45deg, var(--neon-purple), var(--neon-pink))",
                     }}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 p-3 rounded-lg font-semibold"
                   >
-                    Cancel
-                  </button>
+                    CREATE
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={() => setShowCreateEventModal(false)}
+                    className="flex-1 btn-neon"
+                    style={{
+                      background: "linear-gradient(45deg, #6b7280, #4b5563)",
+                    }}
+                  >
+                    CANCEL
+                  </motion.button>
                 </div>
               </form>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Create Tournament Modal */}
+      {/* Create Tournament Modal */}
+      <AnimatePresence>
         {showCreateTournamentModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-2xl font-bold mb-4">Create New Tournament</h2>
-              <form onSubmit={handleCreateTournament} className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="glass-dark rounded-2xl p-8 max-w-md w-full border border-cyan-500/30"
+            >
+              <div className="text-center mb-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="text-4xl mb-4"
+                >
+                  🏆
+                </motion.div>
+                <h2 className="text-3xl font-orbitron font-bold neon-text text-cyan-400">
+                  CREATE TOURNAMENT
+                </h2>
+              </div>
+
+              <form onSubmit={handleCreateTournament} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-rajdhani font-medium mb-3 text-gray-300">
+                    Select Event
+                  </label>
+                  <select
+                    value={selectedEventId}
+                    onChange={(e) => setSelectedEventId(e.target.value)}
+                    className="input-neon w-full"
+                    required
+                  >
+                    <option value="">Choose an event...</option>
+                    {events.map((event) => (
+                      <option key={event.id} value={event.id}>
+                        {event.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-rajdhani font-medium mb-3 text-gray-300">
                     Dance Style
                   </label>
                   <select
                     value={danceStyle}
                     onChange={(e) => setDanceStyle(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    className="input-neon w-full"
+                    required
                   >
                     {danceStyles.map((style) => (
                       <option key={style} value={style}>
@@ -422,8 +684,9 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-rajdhani font-medium mb-3 text-gray-300">
                     Participant Count
                   </label>
                   <select
@@ -431,136 +694,119 @@ export default function AdminPage() {
                     onChange={(e) =>
                       setParticipantCount(Number(e.target.value))
                     }
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    className="input-neon w-full"
+                    required
                   >
                     {participantCounts.map((count) => (
                       <option key={count} value={count}>
-                        {count} participants
+                        {count} Participants
                       </option>
                     ))}
                   </select>
                 </div>
-                {!selectedEventId && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Event
-                    </label>
-                    <select
-                      value={selectedEventId}
-                      onChange={(e) => setSelectedEventId(e.target.value)}
-                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select an event</option>
-                      {events.map((event) => (
-                        <option key={event.id} value={event.id}>
-                          {event.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+
                 <div className="flex gap-4">
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-semibold"
+                    className="flex-1 btn-neon glow"
                   >
-                    Create Tournament
-                  </button>
-                  <button
+                    CREATE
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     type="button"
-                    onClick={() => {
-                      setShowCreateTournamentModal(false);
-                      setDanceStyle("Hiphop");
-                      setParticipantCount(8);
-                      setSelectedEventId("");
+                    onClick={() => setShowCreateTournamentModal(false)}
+                    className="flex-1 btn-neon"
+                    style={{
+                      background: "linear-gradient(45deg, #6b7280, #4b5563)",
                     }}
-                    className="flex-1 bg-gray-600 hover:bg-gray-700 p-3 rounded-lg font-semibold"
                   >
-                    Cancel
-                  </button>
+                    CANCEL
+                  </motion.button>
                 </div>
               </form>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Participants Modal */}
+      {/* Participants Modal */}
+      <AnimatePresence>
         {showParticipantsModal && selectedTournament && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold">
-                    Participants -{" "}
-                    {selectedTournament.name ||
-                      `${selectedTournament.danceStyle} Battle`}
-                  </h2>
-                  <p className="text-gray-400">
-                    {selectedTournament.participants.length} /{" "}
-                    {selectedTournament.participantCount} participants
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  {selectedTournament.participants.length ===
-                    selectedTournament.participantCount && (
-                    <button
-                      onClick={() =>
-                        handleGenerateBrackets(selectedTournament.id)
-                      }
-                      className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
-                    >
-                      Generate Bracket
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setShowParticipantsModal(false);
-                      setSelectedTournament(null);
-                    }}
-                    className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="glass-dark rounded-2xl p-8 max-w-4xl w-full border border-pink-500/30 max-h-[80vh] overflow-y-auto"
+            >
+              <div className="text-center mb-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className="text-4xl mb-4"
+                >
+                  👥
+                </motion.div>
+                <h2 className="text-3xl font-orbitron font-bold neon-text text-pink-400">
+                  PARTICIPANTS
+                </h2>
+                <p className="text-gray-300 font-rajdhani mt-2">
+                  {selectedTournament.name} - {selectedTournament.danceStyle}
+                </p>
               </div>
 
-              {selectedTournament.participants.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">
-                    No participants registered yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {selectedTournament.participants
-                    .sort((a, b) => a.registrationNumber - b.registrationNumber)
-                    .map((participant) => (
-                      <div
-                        key={participant.id}
-                        className="bg-gray-700 rounded-lg p-4 flex items-center gap-4"
-                      >
-                        <div className="relative w-16 h-16 flex-shrink-0">
-                          <Image
-                            src={participant.imageUrl}
-                            alt={participant.name}
-                            fill
-                            className="rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold">
-                            #{participant.registrationNumber} {participant.name}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {selectedTournament.participants.map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="glass border border-pink-500/30 rounded-xl p-4"
+                  >
+                    <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-2 border-pink-400 glow-pink">
+                      <Image
+                        src={participant.imageUrl}
+                        alt={participant.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-lg font-orbitron font-bold text-pink-400">
+                        {participant.name}
+                      </h3>
+                      <p className="text-sm text-gray-400 font-rajdhani">
+                        #{participant.registrationNumber}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-center mt-8">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowParticipantsModal(false)}
+                  className="btn-neon"
+                  style={{
+                    background: "linear-gradient(45deg, #6b7280, #4b5563)",
+                  }}
+                >
+                  CLOSE
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
