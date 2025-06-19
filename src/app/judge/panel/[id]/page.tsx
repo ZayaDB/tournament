@@ -193,7 +193,12 @@ export default function JudgePanelPage({
   const handleVote = async (participantId: string) => {
     if (!judge || !currentMatch) return;
 
-    if (!confirm("이 참가자를 승자로 선택하시겠습니까?")) {
+    let confirmMessage =
+      participantId === "tie"
+        ? "무승부(Tie)로 투표하시겠습니까?"
+        : "이 참가자를 승자로 선택하시겠습니까?";
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -480,6 +485,67 @@ export default function JudgePanelPage({
               )}
           </div>
         </div>
+
+        {/* Current Match */}
+        {currentMatch && currentMatch.participants.length === 2 && (
+          <div className="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Current Match
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {currentMatch.participants.map((participant, index) => (
+                <div
+                  key={participant.id}
+                  className={`bg-gray-700 rounded-lg p-6 ${
+                    index === 0
+                      ? "border-l-4 border-red-500"
+                      : "border-l-4 border-blue-500"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="relative w-20 h-20">
+                      <Image
+                        src={participant.imageUrl}
+                        alt={participant.name}
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold">
+                        #{participant.registrationNumber} {participant.name}
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleVote(participant.id)}
+                    disabled={voting}
+                    className={`w-full py-3 rounded-lg font-semibold mb-2 ${
+                      index === 0
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {voting ? "투표 중..." : "승자로 선택"}
+                  </button>
+                </div>
+              ))}
+            </div>
+            {/* Tie Button */}
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => handleVote("tie")}
+                disabled={voting}
+                className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 rounded-lg font-semibold"
+              >
+                {voting ? "투표 중..." : "무승부 (Tie)"}
+              </button>
+              <p className="mt-2 text-sm text-gray-400">
+                두 참가자의 실력이 비등하여 승자를 가리기 어려운 경우 선택
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,9 +5,17 @@ export async function POST(request: Request) {
   try {
     const { matchId, participantId, judgeId } = await request.json();
 
-    if (!matchId || !participantId || !judgeId) {
+    if (!matchId || !judgeId) {
       return NextResponse.json(
-        { error: "Match ID, participant ID, and judge ID are required" },
+        { error: "Match ID and judge ID are required" },
+        { status: 400 }
+      );
+    }
+
+    // For tie votes, participantId will be "tie"
+    if (participantId !== "tie" && !participantId) {
+      return NextResponse.json(
+        { error: "Participant ID is required for non-tie votes" },
         { status: 400 }
       );
     }
@@ -37,13 +45,9 @@ export async function POST(request: Request) {
     });
 
     // Count votes for this match
-    const votes = await prisma.vote.groupBy({
-      by: ["votedFor"],
+    const votes = await prisma.vote.findMany({
       where: {
         matchId,
-      },
-      _count: {
-        votedFor: true,
       },
     });
 
@@ -56,6 +60,7 @@ export async function POST(request: Request) {
             judges: true,
           },
         },
+        participants: true,
       },
     });
 
@@ -64,55 +69,77 @@ export async function POST(request: Request) {
     }
 
     const totalJudges = match.tournament.judges.length;
-    const totalVotes = votes.reduce(
-      (sum: number, v: { _count: { votedFor: number } }) =>
-        sum + v._count.votedFor,
-      0
-    );
+    const totalVotes = votes.length;
 
-    // If all judges have voted, determine the winner
+    // If all judges have voted
     if (totalVotes >= totalJudges) {
-      const winner = votes.reduce(
-        (
-          prev: { votedFor: string; _count: { votedFor: number } },
-          current: { votedFor: string; _count: { votedFor: number } }
-        ) => {
-          return prev._count.votedFor > current._count.votedFor
-            ? prev
-            : current;
+      // Count tie votes
+      const tieVotes = votes.filter((v) => v.votedFor === "tie").length;
+
+      // If all judges voted for tie
+      if (tieVotes === totalJudges) {
+        // For tie, we don't set a winner (winnerId remains null)
+        // This indicates a tie situation
+        return NextResponse.json({
+          success: true,
+          result: "tie",
+          message: "All judges voted for tie",
+        });
+      }
+
+      // If not all tie votes, count regular votes
+      const voteCount = votes.reduce((acc, vote) => {
+        if (vote.votedFor !== "tie") {
+          acc[vote.votedFor] = (acc[vote.votedFor] || 0) + 1;
         }
-      );
+        return acc;
+      }, {} as { [key: string]: number });
 
-      // Update match winner
-      await prisma.match.update({
-        where: { id: matchId },
-        data: { winnerId: winner.votedFor },
+      // Find the winner (participant with most votes)
+      let maxVotes = 0;
+      let winnerId = null;
+
+      Object.entries(voteCount).forEach(([participantId, count]) => {
+        if (count > maxVotes) {
+          maxVotes = count;
+          winnerId = participantId;
+        }
       });
 
-      // Create next round match if needed
-      const currentMatch = await prisma.match.findUnique({
-        where: { id: matchId },
-        include: { tournament: true },
-      });
-
-      if (currentMatch) {
-        const nextRoundMatch = await prisma.match.findFirst({
-          where: {
-            round: currentMatch.round + 1,
-            tournamentId: currentMatch.tournamentId,
+      if (winnerId) {
+        // Update match winner
+        await prisma.match.update({
+          where: { id: matchId },
+          data: {
+            winnerId,
           },
-          include: { participants: true },
         });
 
-        if (nextRoundMatch) {
-          await prisma.match.update({
-            where: { id: nextRoundMatch.id },
-            data: {
-              participants: {
-                connect: [{ id: winner.votedFor }],
-              },
+        // Create next round match if needed
+        const currentMatch = await prisma.match.findUnique({
+          where: { id: matchId },
+          include: { tournament: true },
+        });
+
+        if (currentMatch) {
+          const nextRoundMatch = await prisma.match.findFirst({
+            where: {
+              round: currentMatch.round + 1,
+              tournamentId: currentMatch.tournamentId,
             },
+            include: { participants: true },
           });
+
+          if (nextRoundMatch) {
+            await prisma.match.update({
+              where: { id: nextRoundMatch.id },
+              data: {
+                participants: {
+                  connect: [{ id: winnerId }],
+                },
+              },
+            });
+          }
         }
       }
     }

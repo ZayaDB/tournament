@@ -39,6 +39,10 @@ export default function AdminPage() {
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
+  const [showMatchManagementModal, setShowMatchManagementModal] =
+    useState(false);
+  const [currentMatchData, setCurrentMatchData] = useState<any>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   // Event form state
   const [eventName, setEventName] = useState("");
@@ -200,6 +204,63 @@ export default function AdminPage() {
     }
   };
 
+  // 매치 관리 함수들
+  const handleManageMatches = async (tournamentId: string) => {
+    setMatchLoading(true);
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/current-match`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentMatchData(data);
+        setShowMatchManagementModal(true);
+      }
+    } catch (error) {
+      console.error("Error fetching current match:", error);
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  const handleFinishMatch = async (matchId: string) => {
+    if (!confirm("이 매치를 완료하고 승자를 결정하시겠습니까?")) return;
+
+    try {
+      const adminToken = localStorage.getItem("adminToken");
+      const response = await fetch(
+        `/api/tournaments/${currentMatchData.tournament.id}/finish-match`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            matchId,
+            adminPassword: adminToken,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`매치 완료! 승자: ${result.winner.name}`);
+
+        // Refresh current match data
+        await handleManageMatches(currentMatchData.tournament.id);
+
+        // If tournament is completed, refresh events
+        if (result.tournamentCompleted) {
+          await fetchEvents();
+          setShowMatchManagementModal(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error finishing match:", error);
+      alert("매치 완료 중 오류가 발생했습니다.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8 flex items-center justify-center">
@@ -327,6 +388,16 @@ export default function AdminPage() {
                             >
                               View Participants
                             </Link>
+                            {tournament.status === "ACTIVE" && (
+                              <button
+                                onClick={() =>
+                                  handleManageMatches(tournament.id)
+                                }
+                                className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
+                              >
+                                Manage Matches
+                              </button>
+                            )}
                             <button
                               onClick={() =>
                                 handleDeleteTournament(tournament.id)
@@ -556,6 +627,190 @@ export default function AdminPage() {
                       </div>
                     ))}
                 </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Match Management Modal */}
+        {showMatchManagementModal && currentMatchData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    Match Management -{" "}
+                    {currentMatchData.tournament.name ||
+                      `${currentMatchData.tournament.danceStyle} Battle`}
+                  </h2>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowMatchManagementModal(false);
+                      setCurrentMatchData(null);
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {matchLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Loading match data...</p>
+                </div>
+              ) : currentMatchData.message === "No active matches found" ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">🏆</div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Tournament Completed!
+                  </h3>
+                  <p className="text-gray-400">
+                    All matches have been completed.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Current Match Info */}
+                  <div className="bg-gray-700 rounded-lg p-6 mb-6">
+                    <div className="text-center mb-4">
+                      <h3 className="text-2xl font-bold mb-2">
+                        Match #{currentMatchData.currentMatch.matchNumber} -
+                        Round {currentMatchData.currentRound}
+                      </h3>
+                      <p className="text-gray-400">
+                        {currentMatchData.currentMatch.participants.length === 2
+                          ? "Battle in Progress"
+                          : "Waiting for participants..."}
+                      </p>
+                    </div>
+
+                    {currentMatchData.currentMatch.participants.length === 2 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {currentMatchData.currentMatch.participants.map(
+                          (participant: any, index: number) => (
+                            <div
+                              key={participant.id}
+                              className={`bg-gray-600 rounded-lg p-4 ${
+                                index === 0
+                                  ? "border-l-4 border-red-500"
+                                  : "border-l-4 border-blue-500"
+                              }`}
+                            >
+                              <div className="flex items-center gap-4 mb-4">
+                                <div className="relative w-16 h-16">
+                                  <Image
+                                    src={participant.imageUrl}
+                                    alt={participant.name}
+                                    fill
+                                    className="rounded-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-lg">
+                                    #{participant.registrationNumber}{" "}
+                                    {participant.name}
+                                  </div>
+                                  <div className="text-gray-400">
+                                    Average Score:{" "}
+                                    <span className="text-yellow-400 font-semibold">
+                                      {participant.scores.length > 0
+                                        ? (
+                                            participant.scores.reduce(
+                                              (sum: number, score: any) =>
+                                                sum + score.value,
+                                              0
+                                            ) / participant.scores.length
+                                          ).toFixed(1)
+                                        : "0.0"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Scores from all judges */}
+                              {participant.scores.length > 0 && (
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium">
+                                    Judge Scores:
+                                  </h4>
+                                  {participant.scores.map((score: any) => (
+                                    <div
+                                      key={score.id}
+                                      className="text-sm text-gray-400 flex justify-between"
+                                    >
+                                      <span>Judge {score.judgeId}:</span>
+                                      <span>{score.value}/10</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-4">⏳</div>
+                        <h3 className="text-xl font-semibold mb-2">
+                          Waiting for Participants
+                        </h3>
+                        <p className="text-gray-400">
+                          This match needs 2 participants to begin.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tournament Progress */}
+                  <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold mb-3">
+                      Tournament Progress
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 bg-gray-600 rounded-full h-3">
+                        <div
+                          className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${
+                              (currentMatchData.currentRound /
+                                currentMatchData.totalRounds) *
+                              100
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">
+                        Round {currentMatchData.currentRound} of{" "}
+                        {currentMatchData.totalRounds}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {currentMatchData.currentMatch.participants.length === 2 && (
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() =>
+                          handleManageMatches(currentMatchData.tournament.id)
+                        }
+                        className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition-colors"
+                      >
+                        Refresh Match Data
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleFinishMatch(currentMatchData.currentMatch.id)
+                        }
+                        className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
+                      >
+                        Finish Match & Determine Winner
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

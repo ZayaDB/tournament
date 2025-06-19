@@ -65,6 +65,7 @@ model Match {
   tournament   Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   participants Participant[]
   winnerId     String?
+  status       String       @default("PENDING") // Can be "PENDING", "COMPLETED", "TIE"
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 }

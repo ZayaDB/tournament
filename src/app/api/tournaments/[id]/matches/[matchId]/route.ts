@@ -12,6 +12,11 @@ export async function GET(
       where: { id: matchId },
       include: {
         participants: true,
+        tournament: {
+          include: {
+            judges: true,
+          },
+        },
       },
     });
 
@@ -19,7 +24,43 @@ export async function GET(
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
 
-    return NextResponse.json(match);
+    // Get votes for this match
+    const votes = await prisma.vote.findMany({
+      where: { matchId },
+      include: {
+        judge: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    // Get scores for participants in this match
+    const participantScores = await prisma.score.findMany({
+      where: {
+        participantId: {
+          in: match.participants.map((p) => p.id),
+        },
+        tournamentId: match.tournamentId,
+      },
+      include: {
+        participant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      ...match,
+      votes,
+      participantScores,
+    });
   } catch (error) {
     console.error("Error fetching match:", error);
     return NextResponse.json(
