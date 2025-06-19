@@ -3,10 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tournamentId = params.id;
+    const { id: tournamentId } = await params;
 
     // Get the current active match (lowest round with participants but no winner)
     const currentMatch = await prisma.match.findFirst({
