@@ -5,10 +5,10 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string; matchId: string } }
+  { params }: { params: Promise<{ id: string; matchId: string }> }
 ) {
   try {
-    const { matchId } = params;
+    const { matchId } = await params;
     const { winnerId, adminPassword } = await request.json();
 
     if (adminPassword !== ADMIN_PASSWORD) {
