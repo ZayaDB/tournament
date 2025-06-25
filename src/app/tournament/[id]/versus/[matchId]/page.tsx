@@ -46,6 +46,7 @@ interface Match {
   };
   votes: Vote[];
   participantScores: Score[];
+  status: string;
 }
 
 export default function VersusPage({
@@ -68,6 +69,12 @@ export default function VersusPage({
   const [firstPlayer, setFirstPlayer] = useState<number | null>(null);
   const [showRoulette, setShowRoulette] = useState<boolean>(true);
   const [roulettePlayer, setRoulettePlayer] = useState<number>(0);
+
+  // Rematch states
+  const [showRematchCountdown, setShowRematchCountdown] =
+    useState<boolean>(false);
+  const [rematchCountdown, setRematchCountdown] = useState<number>(3);
+  const [isRematch, setIsRematch] = useState<boolean>(false);
 
   const fetchMatchData = useCallback(async () => {
     try {
@@ -93,8 +100,8 @@ export default function VersusPage({
   // On mount: randomly select first player and show animation
   useEffect(() => {
     if (!match || match.participants.length !== 2) return;
-    // Only run once on mount
-    if (firstPlayer !== null) return;
+    // Only run once on mount or when rematch starts
+    if (firstPlayer !== null && !isRematch) return;
     // Start roulette animation
     setShowRoulette(true);
     let spinCount = 0;
@@ -121,7 +128,7 @@ export default function VersusPage({
     }, 100);
     // Cleanup
     return () => clearInterval(spinInterval);
-  }, [match, firstPlayer]);
+  }, [match, firstPlayer, isRematch]);
 
   // Timer effect
   useEffect(() => {
@@ -164,11 +171,53 @@ export default function VersusPage({
   };
 
   // Check if match is tied (all judges voted for tie)
-  const isTied =
-    match &&
-    match.votes &&
-    match.votes.length > 0 &&
-    match.votes.every((vote) => vote.votedFor === "tie");
+  const isTied = match && match.status === "TIE";
+
+  // Handle rematch when tie is detected
+  const resetMatchForRematch = useCallback(async () => {
+    try {
+      await fetch(`/api/tournaments/${id}/matches/${matchId}/reset-rematch`, {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("Error resetting match for rematch:", error);
+    }
+  }, [id, matchId]);
+
+  useEffect(() => {
+    if (isTied && !showRematchCountdown && !isRematch) {
+      // Start rematch countdown after 3 seconds
+      setTimeout(() => {
+        setShowRematchCountdown(true);
+        setRematchCountdown(3);
+
+        // Countdown: 3, 2, 1
+        const countdownInterval = setInterval(() => {
+          setRematchCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              setShowRematchCountdown(false);
+              setIsRematch(true);
+
+              // Reset match status to PENDING for rematch
+              resetMatchForRematch();
+
+              // Reset match state for rematch
+              setFirstPlayer(null);
+              setShowRoulette(true);
+              setShowFirstPlayerAnim(true);
+              setCurrentPlayer(0);
+              setTimeLeft(60);
+              setIsRunning(false);
+              setIsPaused(false);
+              return 3;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }, 3000);
+    }
+  }, [isTied, showRematchCountdown, isRematch, resetMatchForRematch]);
 
   if (loading) {
     return (
@@ -192,7 +241,9 @@ export default function VersusPage({
   if (showRoulette && match && match.participants.length === 2) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="text-4xl font-bold mb-8">Who goes first?</div>
+        <div className="text-4xl font-bold mb-8">
+          {isRematch ? "Rematch - Who goes first?" : "Who goes first?"}
+        </div>
         <div className="flex gap-16 items-center mb-8">
           <div
             className={`transition-all duration-200 ${
@@ -223,13 +274,27 @@ export default function VersusPage({
   if (isTied) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-        <div className="text-8xl font-bold mb-8 animate-pulse text-yellow-400 drop-shadow-lg">
-          TIE!
-        </div>
-        <div className="text-4xl text-gray-300 mb-8">
-          Both dancers were amazing!
-        </div>
-        <div className="text-2xl text-gray-400">Preparing for rematch...</div>
+        {showRematchCountdown ? (
+          <>
+            <div className="text-8xl font-bold mb-8 animate-pulse text-yellow-400 drop-shadow-lg">
+              {rematchCountdown}
+            </div>
+            <div className="text-4xl text-gray-300 mb-8">REMATCH STARTING!</div>
+            <div className="text-2xl text-gray-400">Get Ready...</div>
+          </>
+        ) : (
+          <>
+            <div className="text-8xl font-bold mb-8 animate-pulse text-yellow-400 drop-shadow-lg">
+              TIE!
+            </div>
+            <div className="text-4xl text-gray-300 mb-8">
+              Both dancers were amazing!
+            </div>
+            <div className="text-2xl text-gray-400">
+              Preparing for rematch...
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -237,6 +302,9 @@ export default function VersusPage({
   if (showFirstPlayerAnim && firstPlayer !== null) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800 text-white">
+        {isRematch && (
+          <div className="text-2xl font-bold mb-4 text-yellow-400">REMATCH</div>
+        )}
         <div className="text-4xl font-bold mb-8 animate-pulse">
           {firstPlayer === 0 ? (
             <span className="text-red-400 drop-shadow-lg">
@@ -256,14 +324,6 @@ export default function VersusPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
       <div className="max-w-7xl mx-auto p-8">
-        <div className="mb-8">
-          <button
-            onClick={() => router.push(`/tournament/${id}`)}
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
-          >
-            ← Back to Tournament
-          </button>
-        </div>
         {/* Judges Panel */}
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

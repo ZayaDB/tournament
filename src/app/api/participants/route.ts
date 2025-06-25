@@ -57,6 +57,17 @@ export async function POST(request: Request) {
         },
       });
 
+      // 참가자 수가 정원에 도달하면 status를 READY_TO_BRACKET으로 변경
+      const participantCount = await tx.participant.count({
+        where: { tournamentId },
+      });
+      if (participantCount === tournament.participantCount) {
+        await tx.tournament.update({
+          where: { id: tournamentId },
+          data: { status: "READY_TO_BRACKET" },
+        });
+      }
+
       return participant;
     });
 

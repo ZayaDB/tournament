@@ -78,12 +78,39 @@ export async function POST(request: Request) {
 
       // If all judges voted for tie
       if (tieVotes === totalJudges) {
-        // For tie, we don't set a winner (winnerId remains null)
-        // This indicates a tie situation
+        // Update match status to TIE
+        await prisma.match.update({
+          where: { id: matchId },
+          data: {
+            status: "TIE",
+          },
+        });
+
+        // Clear all votes for rematch
+        await prisma.vote.deleteMany({
+          where: {
+            matchId,
+          },
+        });
+
+        // Create new rematch (round+1, same matchNumber, same participants)
+        const newMatch = await prisma.match.create({
+          data: {
+            round: match.round + 1,
+            matchNumber: match.matchNumber,
+            tournamentId: match.tournamentId,
+            status: "PENDING",
+            participants: {
+              connect: match.participants.map((p) => ({ id: p.id })),
+            },
+          },
+        });
+
         return NextResponse.json({
           success: true,
           result: "tie",
-          message: "All judges voted for tie",
+          message: "All judges voted for tie - rematch will begin",
+          rematchMatchId: newMatch.id,
         });
       }
 

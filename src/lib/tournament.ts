@@ -21,7 +21,7 @@ export async function createTournament(
       name,
       danceStyle,
       participantCount,
-      status: "PRESELECTION",
+      status: "PENDING",
       eventId,
     },
   });
@@ -95,10 +95,40 @@ export async function generateBrackets(tournamentId: string) {
     }
   }
 
-  // Update tournament status to ACTIVE
+  // For subsequent rounds, create automatic advancement
+  // This creates a proper bracket structure where winners advance
+  const totalRounds = Math.max(...matches.map((m) => m.round));
+
+  for (let round = 2; round <= totalRounds; round++) {
+    const currentRoundMatches = matches.filter((m) => m.round === round);
+    const previousRoundMatches = matches.filter((m) => m.round === round - 1);
+
+    for (let i = 0; i < currentRoundMatches.length; i++) {
+      const currentMatch = currentRoundMatches[i];
+      const match1Index = i * 2;
+      const match2Index = i * 2 + 1;
+
+      // Get the two previous round matches that feed into this match
+      const previousMatch1 = previousRoundMatches[match1Index];
+      const previousMatch2 = previousRoundMatches[match2Index];
+
+      if (previousMatch1 && previousMatch2) {
+        // For now, we'll leave these matches empty (TBD)
+        // They will be populated when the previous round matches are completed
+        // This creates the proper bracket structure
+        console.log(
+          `Round ${round} Match ${i + 1} will be populated from Round ${
+            round - 1
+          } Matches ${match1Index + 1} and ${match2Index + 1}`
+        );
+      }
+    }
+  }
+
+  // Update tournament status to READY_TO_BRACKET (not ACTIVE yet)
   await prisma.tournament.update({
     where: { id: tournamentId },
-    data: { status: "ACTIVE" },
+    data: { status: "READY_TO_BRACKET" },
   });
 
   return matches;

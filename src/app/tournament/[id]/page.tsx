@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Participant {
   id: string;
@@ -45,6 +45,8 @@ export default function TournamentPage({
   });
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isViewer = searchParams.get("viewer") === "1";
 
   // Calculate derived state
   const hasMatchesWithParticipants = matches.some(
@@ -53,7 +55,9 @@ export default function TournamentPage({
   const isFullTournament =
     tournament && participants.length === tournament.participantCount;
   const showBracketView = hasMatchesWithParticipants || isFullTournament;
-  const canGenerateBrackets = tournament?.status === "READY_TO_BRACKET";
+  const canGenerateBrackets =
+    tournament?.status === "READY_TO_BRACKET" ||
+    (tournament?.status === "PENDING" && participants.length >= 2);
 
   const fetchTournamentData = useCallback(async () => {
     try {
@@ -117,23 +121,6 @@ export default function TournamentPage({
   useEffect(() => {
     fetchTournamentData();
   }, [fetchTournamentData]);
-
-  // Auto-generate brackets when we have exactly the required number of participants
-  useEffect(() => {
-    if (
-      tournament &&
-      participants.length === tournament.participantCount &&
-      tournament.status === "PENDING" &&
-      !hasMatchesWithParticipants
-    ) {
-      generateBrackets();
-    }
-  }, [
-    tournament,
-    participants.length,
-    hasMatchesWithParticipants,
-    generateBrackets,
-  ]);
 
   const handleParticipantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,12 +204,6 @@ export default function TournamentPage({
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={() => router.push("/admin")}
-            className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-semibold text-sm mr-4"
-          >
-            ← Admin Panel
-          </button>
           <h1 className="text-3xl font-bold">
             {tournament?.name} - {tournament?.danceStyle}
           </h1>
@@ -247,111 +228,115 @@ export default function TournamentPage({
         )}
 
         {/* Participants Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">
-              Registered Participants ({participants.length}/
-              {tournament?.participantCount})
-            </h2>
-            {canGenerateBrackets && (
-              <button
-                onClick={() => setShowRegistrationForm(!showRegistrationForm)}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
-              >
-                {showRegistrationForm ? "Cancel" : "Add Participant"}
-              </button>
-            )}
-          </div>
-
-          {/* Registration Form */}
-          {showRegistrationForm && canGenerateBrackets && (
-            <div className="bg-gray-800 rounded-lg p-6 mb-6">
-              <h3 className="text-xl font-semibold mb-4">
-                Register New Participant
-              </h3>
-              <form onSubmit={handleParticipantSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newParticipant.name}
-                    onChange={(e) =>
-                      setNewParticipant((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Profile Image
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="flex gap-4">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-2 rounded-lg"
-                  >
-                    {submitting ? "Registering..." : "Register"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRegistrationForm(false)}
-                    className="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Participants Grid */}
-          {hasParticipants && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {participants.map((participant) => (
-                <div
-                  key={participant.id}
-                  className="bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 transition-colors"
+        {!isViewer && (
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">
+                Registered Participants ({participants.length}/
+                {tournament?.participantCount})
+              </h2>
+              {canGenerateBrackets && (
+                <button
+                  onClick={() => setShowRegistrationForm(!showRegistrationForm)}
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
                 >
-                  <div className="w-16 h-16 relative rounded-full overflow-hidden mx-auto mb-2">
-                    <Image
-                      src={participant.imageUrl}
-                      alt={participant.name}
-                      fill
-                      className="object-cover"
+                  {showRegistrationForm ? "Cancel" : "Add Participant"}
+                </button>
+              )}
+            </div>
+
+            {/* Registration Form */}
+            {showRegistrationForm && canGenerateBrackets && (
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 className="text-xl font-semibold mb-4">
+                  Register New Participant
+                </h3>
+                <form onSubmit={handleParticipantSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newParticipant.name}
+                      onChange={(e) =>
+                        setNewParticipant((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                      required
                     />
                   </div>
-                  <p className="font-medium text-sm">{participant.name}</p>
-                  <p className="text-gray-400 text-xs">
-                    #{participant.registrationNumber}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Profile Image
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-2 rounded-lg"
+                    >
+                      {submitting ? "Registering..." : "Register"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRegistrationForm(false)}
+                      className="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
 
-          {!hasParticipants && (
-            <div className="text-center text-gray-400 py-8">
-              <p className="text-xl">No participants registered yet.</p>
-              <p className="mt-2">
-                Click &quot;Add Participant&quot; to register the first
-                participant.
-              </p>
-            </div>
-          )}
-        </div>
+            {/* Participants Grid */}
+            {hasParticipants && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {participants.map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="w-16 h-16 relative rounded-full overflow-hidden mx-auto mb-2">
+                      <Image
+                        src={participant.imageUrl}
+                        alt={participant.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <p className="font-medium text-sm">{participant.name}</p>
+                    <p className="text-gray-400 text-xs">
+                      #{participant.registrationNumber}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!hasParticipants && (
+              <div className="text-center text-gray-400 py-8">
+                <p className="text-xl">No participants registered yet.</p>
+                <p className="mt-2">
+                  Click &quot;Add Participant&quot; to register the first
+                  participant.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Generate Brackets Button */}
         {canGenerateBrackets && !hasMatchesWithParticipants && (
@@ -363,7 +348,7 @@ export default function TournamentPage({
             >
               {generatingBrackets
                 ? "Generating Brackets..."
-                : "🎯 Generate Brackets"}
+                : `🎯 Generate Brackets (${participants.length} participants)`}
             </button>
           </div>
         )}
@@ -454,8 +439,10 @@ export default function TournamentPage({
                               !match.winnerId &&
                               match.participants.length === 2
                             ) {
-                              router.push(
-                                `/tournament/${id}/versus/${match.id}`
+                              window.open(
+                                `/tournament/${id}/versus/${match.id}`,
+                                "_blank",
+                                "noopener"
                               );
                             }
                           }}

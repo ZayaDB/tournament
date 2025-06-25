@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 interface Judge {
@@ -53,6 +53,8 @@ export default function JudgePanelPage({
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [voting, setVoting] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const matchIdFromQuery = searchParams.get("matchId");
 
   const fetchJudgeData = useCallback(
     async (judgeId: string) => {
@@ -64,15 +66,27 @@ export default function JudgePanelPage({
 
           // Fetch current match if tournament is ACTIVE
           if (data.judge.tournament.status === "ACTIVE") {
-            const matchesResponse = await fetch(
-              `/api/tournaments/${data.judge.tournament.id}/matches`
-            );
-            if (matchesResponse.ok) {
-              const matches = await matchesResponse.json();
-              const activeMatch = matches.find(
-                (m: Match) => !m.winnerId && m.participants.length === 2
+            if (matchIdFromQuery) {
+              // 쿼리스트링에 matchId가 있으면 해당 match만 fetch
+              const matchRes = await fetch(
+                `/api/tournaments/${data.judge.tournament.id}/matches/${matchIdFromQuery}`
               );
-              setCurrentMatch(activeMatch);
+              if (matchRes.ok) {
+                const match = await matchRes.json();
+                setCurrentMatch(match);
+              }
+            } else {
+              // 기존 로직
+              const matchesResponse = await fetch(
+                `/api/tournaments/${data.judge.tournament.id}/matches`
+              );
+              if (matchesResponse.ok) {
+                const matches = await matchesResponse.json();
+                const activeMatch = matches.find(
+                  (m: Match) => !m.winnerId && m.participants.length === 2
+                );
+                setCurrentMatch(activeMatch);
+              }
             }
           }
         } else {
@@ -86,7 +100,7 @@ export default function JudgePanelPage({
         setLoading(false);
       }
     },
-    [router]
+    [router, matchIdFromQuery]
   );
 
   useEffect(() => {
@@ -217,6 +231,12 @@ export default function JudgePanelPage({
       });
 
       if (response.ok) {
+        const data = await response.json();
+        if (data.rematchMatchId) {
+          // rematch가 생성된 경우, 새 match로 이동
+          window.location.href = `/judge/panel/${judge.id}?matchId=${data.rematchMatchId}`;
+          return;
+        }
         alert("투표가 완료되었습니다.");
         fetchJudgeData(judge.id);
       } else {
@@ -276,7 +296,7 @@ export default function JudgePanelPage({
                   disabled={finishingScoring}
                   className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-3 rounded-lg font-semibold"
                 >
-                  {finishingScoring ? "처리 중..." : "점수 입력 완료"}
+                  {finishingScoring ? "처리 중..." : "done"}
                 </button>
               )}
             <button
@@ -480,7 +500,7 @@ export default function JudgePanelPage({
                   disabled={finishingScoring}
                   className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 px-4 py-2 rounded-lg font-medium"
                 >
-                  {finishingScoring ? "Finishing..." : "점수 입력 완료"}
+                  {finishingScoring ? "Finishing..." : "done"}
                 </button>
               )}
           </div>

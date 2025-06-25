@@ -167,16 +167,16 @@ export default function AdminPage() {
 
     if (!tournament) return;
 
-    if (tournament.status !== "READY_TO_BRACKET") {
-      alert(
-        "Cannot generate brackets yet. Please wait for judges to complete preselection."
-      );
+    if (tournament.participants?.length < 2) {
+      alert("Need at least 2 participants to generate brackets.");
       return;
     }
 
     if (
       !confirm(
-        "브래킷을 생성하시겠습니까? 생성 후에는 더 이상 참가자를 추가할 수 없습니다."
+        `브래킷을 생성하시겠습니까? (${
+          tournament.participants?.length ?? 0
+        } participants)`
       )
     )
       return;
@@ -361,6 +361,7 @@ export default function AdminPage() {
                           {tournament.danceStyle}
                         </p>
                         <p className="text-sm text-gray-400 mb-3">
+                          {tournament.participants?.length ?? 0} /{" "}
                           {tournament.participantCount} participants
                         </p>
                         <div className="flex justify-between items-center mb-3">
@@ -388,16 +389,28 @@ export default function AdminPage() {
                             >
                               View Participants
                             </Link>
-                            {tournament.status === "ACTIVE" && (
-                              <button
-                                onClick={() =>
-                                  handleManageMatches(tournament.id)
-                                }
-                                className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                              >
-                                Manage Matches
-                              </button>
-                            )}
+                            <button
+                              onClick={() =>
+                                window.open(
+                                  `/tournament/${tournament.id}?viewer=1`,
+                                  "_blank"
+                                )
+                              }
+                              className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
+                            >
+                              View Bracket
+                            </button>
+                            {tournament.participants?.length >= 2 &&
+                              tournament.status !== "ACTIVE" && (
+                                <button
+                                  onClick={() =>
+                                    handleGenerateBrackets(tournament.id)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
+                                >
+                                  Generate Bracket
+                                </button>
+                              )}
                             <button
                               onClick={() =>
                                 handleDeleteTournament(tournament.id)
@@ -568,20 +581,21 @@ export default function AdminPage() {
                       `${selectedTournament.danceStyle} Battle`}
                   </h2>
                   <p className="text-gray-400">
-                    {selectedTournament.participants.length} /{" "}
+                    {selectedTournament.participants?.length ?? 0} /{" "}
                     {selectedTournament.participantCount} participants
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {selectedTournament.participants.length ===
-                    selectedTournament.participantCount && (
+                  {selectedTournament.participants?.length >= 2 && (
                     <button
                       onClick={() =>
                         handleGenerateBrackets(selectedTournament.id)
                       }
                       className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
                     >
-                      Generate Bracket
+                      Generate Bracket (
+                      {selectedTournament.participants?.length ?? 0}{" "}
+                      participants)
                     </button>
                   )}
                   <button
@@ -596,7 +610,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {selectedTournament.participants.length === 0 ? (
+              {selectedTournament.participants?.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400">
                     No participants registered yet.
@@ -807,6 +821,22 @@ export default function AdminPage() {
                         className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
                       >
                         Finish Match & Determine Winner
+                      </button>
+                    </div>
+                  )}
+
+                  {currentMatchData.currentMatch && (
+                    <div className="flex gap-4 mb-4">
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `/viewer/match/${currentMatchData.currentMatch.id}`,
+                            "_blank"
+                          )
+                        }
+                        className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold text-black"
+                      >
+                        배틀 보기
                       </button>
                     </div>
                   )}
