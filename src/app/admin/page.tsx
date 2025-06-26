@@ -167,16 +167,16 @@ export default function AdminPage() {
 
     if (!tournament) return;
 
-    if (tournament.participants?.length < 2) {
-      alert("Need at least 2 participants to generate brackets.");
+    if (tournament.status !== "READY_TO_BRACKET") {
+      alert(
+        "Cannot generate brackets yet. Please wait for judges to complete preselection."
+      );
       return;
     }
 
     if (
       !confirm(
-        `브래킷을 생성하시겠습니까? (${
-          tournament.participants?.length ?? 0
-        } participants)`
+        "브래킷을 생성하시겠습니까? 생성 후에는 더 이상 참가자를 추가할 수 없습니다."
       )
     )
       return;
@@ -352,7 +352,10 @@ export default function AdminPage() {
                     {event.tournaments.map((tournament) => (
                       <div
                         key={tournament.id}
-                        className="bg-gray-700 rounded-lg p-4"
+                        className="bg-gray-700 rounded-lg p-4 cursor-pointer hover:bg-blue-800 transition-colors"
+                        onClick={() =>
+                          router.push(`/tournament/${tournament.id}`)
+                        }
                       >
                         <h4 className="font-semibold mb-2">
                           {tournament.name}
@@ -360,8 +363,8 @@ export default function AdminPage() {
                         <p className="text-sm text-gray-300 mb-2">
                           {tournament.danceStyle}
                         </p>
-                        <p className="text-sm text-gray-400 mb-3">
-                          {tournament.participants?.length ?? 0} /{" "}
+                        <p className="text-gray-400 text-sm mb-2">
+                          {tournament.participants?.length ?? 0}/
                           {tournament.participantCount} participants
                         </p>
                         <div className="flex justify-between items-center mb-3">
@@ -383,38 +386,34 @@ export default function AdminPage() {
                               : tournament.status}
                           </span>
                           <div className="flex gap-2">
-                            <Link
-                              href={`/tournament/${tournament.id}`}
-                              className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                            >
-                              View Participants
-                            </Link>
                             <button
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 window.open(
-                                  `/tournament/${tournament.id}?viewer=1`,
+                                  `/tournament/${tournament.id}?view=bracket`,
                                   "_blank"
-                                )
-                              }
+                                );
+                              }}
                               className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
                             >
                               View Bracket
                             </button>
-                            {tournament.participants?.length >= 2 &&
-                              tournament.status !== "ACTIVE" && (
-                                <button
-                                  onClick={() =>
-                                    handleGenerateBrackets(tournament.id)
-                                  }
-                                  className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                                >
-                                  Generate Bracket
-                                </button>
-                              )}
+                            {tournament.status === "ACTIVE" && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleManageMatches(tournament.id);
+                                }}
+                                className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
+                              >
+                                Manage Matches
+                              </button>
+                            )}
                             <button
-                              onClick={() =>
-                                handleDeleteTournament(tournament.id)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTournament(tournament.id);
+                              }}
                               className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
                             >
                               Delete
@@ -581,21 +580,20 @@ export default function AdminPage() {
                       `${selectedTournament.danceStyle} Battle`}
                   </h2>
                   <p className="text-gray-400">
-                    {selectedTournament.participants?.length ?? 0} /{" "}
+                    {selectedTournament.participants.length} /{" "}
                     {selectedTournament.participantCount} participants
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {selectedTournament.participants?.length >= 2 && (
+                  {selectedTournament.participants.length ===
+                    selectedTournament.participantCount && (
                     <button
                       onClick={() =>
                         handleGenerateBrackets(selectedTournament.id)
                       }
                       className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
                     >
-                      Generate Bracket (
-                      {selectedTournament.participants?.length ?? 0}{" "}
-                      participants)
+                      Generate Bracket
                     </button>
                   )}
                   <button
@@ -610,7 +608,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {selectedTournament.participants?.length === 0 ? (
+              {selectedTournament.participants.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400">
                     No participants registered yet.
@@ -821,22 +819,6 @@ export default function AdminPage() {
                         className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition-colors"
                       >
                         Finish Match & Determine Winner
-                      </button>
-                    </div>
-                  )}
-
-                  {currentMatchData.currentMatch && (
-                    <div className="flex gap-4 mb-4">
-                      <button
-                        onClick={() =>
-                          window.open(
-                            `/viewer/match/${currentMatchData.currentMatch.id}`,
-                            "_blank"
-                          )
-                        }
-                        className="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg font-semibold text-black"
-                      >
-                        배틀 보기
                       </button>
                     </div>
                   )}

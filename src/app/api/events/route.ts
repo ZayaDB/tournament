@@ -5,11 +5,7 @@ export async function GET() {
   try {
     const events = await prisma.event.findMany({
       include: {
-        tournaments: {
-          include: {
-            participants: true,
-          },
-        },
+        tournaments: true,
       },
       orderBy: {
         createdAt: "desc",

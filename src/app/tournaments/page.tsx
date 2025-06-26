@@ -131,6 +131,11 @@ export default function TournamentsPage() {
                           <div>
                             <h3 className="text-xl font-semibold mb-2">
                               {tournament.name}
+                              <span className="ml-2 text-sm font-mono px-2 py-1 rounded bg-gray-900/60 border border-gray-700 text-yellow-300 align-middle">
+                                {getParticipantCount(tournament)}/
+                                {tournament.participantCount},{" "}
+                                {tournament.status}
+                              </span>
                             </h3>
                             <p className="text-gray-300 text-sm">
                               {tournament.danceStyle}

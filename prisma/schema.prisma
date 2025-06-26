@@ -68,13 +68,6 @@ model Match {
   status       String       @default("PENDING") // Can be "PENDING", "COMPLETED", "TIE"
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
-
-  // 배틀 동기화용 필드
-  firstPlayerId      String?
-  currentTurnPlayerId String?
-  timerStart         DateTime?
-  timerDuration      Int? // seconds
-  isStarted          Boolean? @default(false)
 }
 
 model Score {

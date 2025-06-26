@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     const result = await prisma.$transaction(async (tx) => {
       const tournament = await tx.tournament.findUniqueOrThrow({
         where: { id: tournamentId },
+        include: { participants: true },
       });
 
       const participant = await tx.participant.create({
@@ -57,16 +58,16 @@ export async function POST(request: Request) {
         },
       });
 
-      // 참가자 수가 정원에 도달하면 status를 READY_TO_BRACKET으로 변경
-      const participantCount = await tx.participant.count({
-        where: { tournamentId },
+      // 참가자 수에 따라 status 자동 전환
+      const count = tournament.participants.length + 1; // 방금 추가된 참가자 포함
+      const limit = tournament.participantCount;
+      let newStatus = "PENDING";
+      if (count === limit) newStatus = "READY_TO_BRACKET";
+      else if (count > limit) newStatus = "PRESELECTION";
+      await tx.tournament.update({
+        where: { id: tournamentId },
+        data: { status: newStatus },
       });
-      if (participantCount === tournament.participantCount) {
-        await tx.tournament.update({
-          where: { id: tournamentId },
-          data: { status: "READY_TO_BRACKET" },
-        });
-      }
 
       return participant;
     });

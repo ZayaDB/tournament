@@ -78,39 +78,22 @@ export async function POST(request: Request) {
 
       // If all judges voted for tie
       if (tieVotes === totalJudges) {
-        // Update match status to TIE
-        await prisma.match.update({
-          where: { id: matchId },
+        // For tie, create a rematch with the same participants
+        const rematch = await prisma.match.create({
           data: {
-            status: "TIE",
-          },
-        });
-
-        // Clear all votes for rematch
-        await prisma.vote.deleteMany({
-          where: {
-            matchId,
-          },
-        });
-
-        // Create new rematch (round+1, same matchNumber, same participants)
-        const newMatch = await prisma.match.create({
-          data: {
-            round: match.round + 1,
-            matchNumber: match.matchNumber,
+            round: match.round + 1, // 다음 라운드로 생성
+            matchNumber: 1, // rematch는 항상 1번으로(혹은 필요시 기존 로직 유지)
             tournamentId: match.tournamentId,
-            status: "PENDING",
             participants: {
               connect: match.participants.map((p) => ({ id: p.id })),
             },
           },
         });
-
         return NextResponse.json({
           success: true,
           result: "tie",
-          message: "All judges voted for tie - rematch will begin",
-          rematchMatchId: newMatch.id,
+          message: "All judges voted for tie. Rematch created.",
+          rematchId: rematch.id,
         });
       }
 
@@ -124,7 +107,7 @@ export async function POST(request: Request) {
 
       // Find the winner (participant with most votes)
       let maxVotes = 0;
-      let winnerId = null;
+      let winnerId: string | null = null;
 
       Object.entries(voteCount).forEach(([participantId, count]) => {
         if (count > maxVotes) {
@@ -153,16 +136,18 @@ export async function POST(request: Request) {
             where: {
               round: currentMatch.round + 1,
               tournamentId: currentMatch.tournamentId,
+              matchNumber: Math.ceil(currentMatch.matchNumber / 2),
             },
             include: { participants: true },
           });
 
           if (nextRoundMatch) {
+            // winner만 남기고 나머지 참가자는 disconnect (set)
             await prisma.match.update({
               where: { id: nextRoundMatch.id },
               data: {
                 participants: {
-                  connect: [{ id: winnerId }],
+                  set: [{ id: winnerId }],
                 },
               },
             });

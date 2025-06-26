@@ -33,6 +33,8 @@ export default function TournamentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const viewMode = searchParams.get("view");
   const [matches, setMatches] = useState<Match[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -45,8 +47,6 @@ export default function TournamentPage({
   });
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isViewer = searchParams.get("viewer") === "1";
 
   // Calculate derived state
   const hasMatchesWithParticipants = matches.some(
@@ -55,9 +55,7 @@ export default function TournamentPage({
   const isFullTournament =
     tournament && participants.length === tournament.participantCount;
   const showBracketView = hasMatchesWithParticipants || isFullTournament;
-  const canGenerateBrackets =
-    tournament?.status === "READY_TO_BRACKET" ||
-    (tournament?.status === "PENDING" && participants.length >= 2);
+  const canGenerateBrackets = tournament?.status === "READY_TO_BRACKET";
 
   const fetchTournamentData = useCallback(async () => {
     try {
@@ -121,6 +119,23 @@ export default function TournamentPage({
   useEffect(() => {
     fetchTournamentData();
   }, [fetchTournamentData]);
+
+  // Auto-generate brackets when we have exactly the required number of participants
+  useEffect(() => {
+    if (
+      tournament &&
+      participants.length === tournament.participantCount &&
+      tournament.status === "PENDING" &&
+      !hasMatchesWithParticipants
+    ) {
+      generateBrackets();
+    }
+  }, [
+    tournament,
+    participants.length,
+    hasMatchesWithParticipants,
+    generateBrackets,
+  ]);
 
   const handleParticipantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +212,109 @@ export default function TournamentPage({
     );
   }
 
+  // 브래킷만 보여주는 모드
+  if (viewMode === "bracket") {
+    const maxRound = Math.max(...matches.map((m) => m.round), 0);
+    const hasParticipants = participants.length > 0;
+    const hasMatchesWithParticipants = matches.some(
+      (match) => match.participants.length > 0
+    );
+    const showBracketView =
+      hasMatchesWithParticipants ||
+      (tournament && participants.length === tournament.participantCount);
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8">
+        <div className="max-w-7xl mx-auto">
+          {showBracketView && (
+            <div className="overflow-x-auto">
+              <h2 className="text-2xl font-semibold mb-4">
+                Tournament Bracket
+              </h2>
+              {hasMatchesWithParticipants && (
+                <div className="flex gap-8 justify-start min-w-max p-4">
+                  {Array.from({ length: maxRound }, (_, i) => i + 1).map(
+                    (round) => (
+                      <div key={round} className="flex flex-col gap-8">
+                        {/* <h3 className="text-xl font-semibold text-center">Round {round}</h3> */}
+                        {matches
+                          .filter((match) => match.round === round)
+                          .map((match) => (
+                            <div
+                              key={match.id}
+                              data-round={round}
+                              className={`w-64 bg-gray-800 rounded-lg overflow-hidden shadow-lg`}
+                            >
+                              {match.participants.length > 0 ? (
+                                match.participants.map((participant, idx) => (
+                                  <div
+                                    key={participant.id}
+                                    className={`p-4 flex items-center gap-3 ${
+                                      idx === 0
+                                        ? "bg-red-900/30"
+                                        : "bg-blue-900/30"
+                                    } ${
+                                      match.winnerId === participant.id
+                                        ? "border-2 border-yellow-500"
+                                        : ""
+                                    }`}
+                                  >
+                                    <div className="w-10 h-10 relative rounded-full overflow-hidden">
+                                      <Image
+                                        src={participant.imageUrl}
+                                        alt={participant.name}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <span className="font-medium">
+                                      {participant.name}
+                                    </span>
+                                  </div>
+                                ))
+                              ) : match.winnerId ? (
+                                (() => {
+                                  const winner = participants.find(
+                                    (p) => p.id === match.winnerId
+                                  );
+                                  return winner ? (
+                                    <div className="p-4 flex items-center gap-3 border-2 border-yellow-500 bg-yellow-900/20">
+                                      <div className="w-10 h-10 relative rounded-full overflow-hidden">
+                                        <Image
+                                          src={winner.imageUrl}
+                                          alt={winner.name}
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                      <span className="font-medium">
+                                        {winner.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="p-4 text-center text-gray-400">
+                                      TBD
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                <div className="p-4 text-center text-gray-400">
+                                  TBD
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const maxRound = Math.max(...matches.map((m) => m.round), 0);
   const hasParticipants = participants.length > 0;
 
@@ -204,6 +322,12 @@ export default function TournamentPage({
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={() => router.push("/admin")}
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-semibold text-sm mr-4"
+          >
+            ← Admin Panel
+          </button>
           <h1 className="text-3xl font-bold">
             {tournament?.name} - {tournament?.danceStyle}
           </h1>
@@ -228,130 +352,135 @@ export default function TournamentPage({
         )}
 
         {/* Participants Section */}
-        {!isViewer && (
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">
-                Registered Participants ({participants.length}/
-                {tournament?.participantCount})
-              </h2>
-              {canGenerateBrackets && (
-                <button
-                  onClick={() => setShowRegistrationForm(!showRegistrationForm)}
-                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
-                >
-                  {showRegistrationForm ? "Cancel" : "Add Participant"}
-                </button>
-              )}
-            </div>
-
-            {/* Registration Form */}
-            {showRegistrationForm && canGenerateBrackets && (
-              <div className="bg-gray-800 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-4">
-                  Register New Participant
-                </h3>
-                <form onSubmit={handleParticipantSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={newParticipant.name}
-                      onChange={(e) =>
-                        setNewParticipant((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Profile Image
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-2 rounded-lg"
-                    >
-                      {submitting ? "Registering..." : "Register"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowRegistrationForm(false)}
-                      className="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Participants Grid */}
-            {hasParticipants && (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {participants.map((participant) => (
-                  <div
-                    key={participant.id}
-                    className="bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 transition-colors"
-                  >
-                    <div className="w-16 h-16 relative rounded-full overflow-hidden mx-auto mb-2">
-                      <Image
-                        src={participant.imageUrl}
-                        alt={participant.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <p className="font-medium text-sm">{participant.name}</p>
-                    <p className="text-gray-400 text-xs">
-                      #{participant.registrationNumber}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!hasParticipants && (
-              <div className="text-center text-gray-400 py-8">
-                <p className="text-xl">No participants registered yet.</p>
-                <p className="mt-2">
-                  Click &quot;Add Participant&quot; to register the first
-                  participant.
-                </p>
-              </div>
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">
+              Registered Participants ({participants.length}/
+              {tournament?.participantCount})
+            </h2>
+            {canGenerateBrackets && (
+              <button
+                onClick={() => setShowRegistrationForm(!showRegistrationForm)}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+              >
+                {showRegistrationForm ? "Cancel" : "Add Participant"}
+              </button>
             )}
           </div>
-        )}
+
+          {/* Registration Form */}
+          {showRegistrationForm && canGenerateBrackets && (
+            <div className="bg-gray-800 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-semibold mb-4">
+                Register New Participant
+              </h3>
+              <form onSubmit={handleParticipantSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Name</label>
+                  <input
+                    type="text"
+                    value={newParticipant.name}
+                    onChange={(e) =>
+                      setNewParticipant((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Profile Image
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-2 rounded-lg"
+                  >
+                    {submitting ? "Registering..." : "Register"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRegistrationForm(false)}
+                    className="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Participants Grid */}
+          {hasParticipants && (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {participants.map((participant) => (
+                <div
+                  key={participant.id}
+                  className="bg-gray-800 rounded-lg p-4 text-center hover:bg-gray-700 transition-colors"
+                >
+                  <div className="w-16 h-16 relative rounded-full overflow-hidden mx-auto mb-2">
+                    <Image
+                      src={participant.imageUrl}
+                      alt={participant.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <p className="font-medium text-sm">{participant.name}</p>
+                  <p className="text-gray-400 text-xs">
+                    #{participant.registrationNumber}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!hasParticipants && (
+            <div className="text-center text-gray-400 py-8">
+              <p className="text-xl">No participants registered yet.</p>
+              <p className="mt-2">
+                Click &quot;Add Participant&quot; to register the first
+                participant.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Generate Brackets Button */}
-        {canGenerateBrackets && !hasMatchesWithParticipants && (
-          <div className="mb-8 text-center">
-            <button
-              onClick={generateBrackets}
-              disabled={generatingBrackets}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-3 rounded-lg font-semibold text-lg"
-            >
-              {generatingBrackets
-                ? "Generating Brackets..."
-                : `🎯 Generate Brackets (${participants.length} participants)`}
-            </button>
-          </div>
-        )}
+        {
+          // 참가자 수가 정원과 같고, 아직 매치가 없고, 상태가 READY_TO_BRACKET이면 버튼 노출
+          ((participants.length === tournament?.participantCount &&
+            canGenerateBrackets &&
+            !hasMatchesWithParticipants) ||
+            // 참가자 수가 정원보다 많고, 심사 완료(READY_TO_BRACKET)이고, 아직 매치가 없으면 버튼 노출
+            (participants.length > (tournament?.participantCount || 0) &&
+              canGenerateBrackets &&
+              !hasMatchesWithParticipants)) && (
+            <div className="mb-8 text-center">
+              <button
+                onClick={generateBrackets}
+                disabled={generatingBrackets}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-3 rounded-lg font-semibold text-lg"
+              >
+                {generatingBrackets
+                  ? "Generating Brackets..."
+                  : "🎯 Generate Brackets"}
+              </button>
+            </div>
+          )
+        }
 
         {/* Start Battle Button */}
         {hasMatchesWithParticipants &&
@@ -413,9 +542,7 @@ export default function TournamentPage({
                 {Array.from({ length: maxRound }, (_, i) => i + 1).map(
                   (round) => (
                     <div key={round} className="flex flex-col gap-8">
-                      <h3 className="text-xl font-semibold text-center">
-                        Round {round}
-                      </h3>
+                      {/* <h3 className="text-xl font-semibold text-center">Round {round}</h3> */}
                       {getMatchesByRound(round).map((match) => (
                         <div
                           key={match.id}
@@ -441,8 +568,7 @@ export default function TournamentPage({
                             ) {
                               window.open(
                                 `/tournament/${id}/versus/${match.id}`,
-                                "_blank",
-                                "noopener"
+                                "_blank"
                               );
                             }
                           }}
@@ -472,6 +598,31 @@ export default function TournamentPage({
                                 </span>
                               </div>
                             ))
+                          ) : match.winnerId ? (
+                            (() => {
+                              const winner = participants.find(
+                                (p) => p.id === match.winnerId
+                              );
+                              return winner ? (
+                                <div className="p-4 flex items-center gap-3 border-2 border-yellow-500 bg-yellow-900/20">
+                                  <div className="w-10 h-10 relative rounded-full overflow-hidden">
+                                    <Image
+                                      src={winner.imageUrl}
+                                      alt={winner.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <span className="font-medium">
+                                    {winner.name}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="p-4 text-center text-gray-400">
+                                  TBD
+                                </div>
+                              );
+                            })()
                           ) : (
                             <div className="p-4 text-center text-gray-400">
                               TBD
