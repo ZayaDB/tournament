@@ -71,26 +71,33 @@ export default function TournamentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8 flex items-center justify-center">
-        <div className="text-2xl">Loading tournaments...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-float">🎭</div>
+          <div className="text-2xl font-bold dance-gradient-text">
+            Loading tournaments...
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Available Tournaments</h1>
-            <p className="text-gray-300">
-              Choose a tournament to join the battle
+            <h1 className="text-5xl font-black mb-4 dance-gradient-text tracking-tight">
+              Available Tournaments
+            </h1>
+            <p className="text-xl text-gray-300 font-light">
+              Choose a tournament to join the ultimate dance battle
             </p>
           </div>
           <Link
             href="/"
-            className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 px-8 py-4 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg"
           >
             ← Back to Home
           </Link>
@@ -98,69 +105,75 @@ export default function TournamentsPage() {
 
         {/* Events and Tournaments */}
         {events.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🎭</div>
-            <h2 className="text-2xl font-semibold mb-4">No Events Available</h2>
-            <p className="text-gray-400">
-              Check back later for upcoming dance battle tournaments.
+          <div className="text-center py-20">
+            <div className="text-8xl mb-6 animate-float">🎭</div>
+            <h2 className="text-3xl font-bold mb-6 dance-gradient-text">
+              No Events Available
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              Check back later for upcoming dance battle tournaments. The stage
+              is being prepared for epic battles!
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-12">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 shadow-2xl"
               >
-                <h2 className="text-2xl font-bold mb-4 text-purple-400">
+                <h2 className="text-3xl font-bold mb-6 gradient-text">
                   {event.name}
                 </h2>
 
                 {event.tournaments.length === 0 ? (
-                  <p className="text-gray-400 italic">
+                  <p className="text-gray-400 italic text-lg">
                     No tournaments in this event yet.
                   </p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {event.tournaments.map((tournament) => (
                       <div
                         key={tournament.id}
-                        className="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors"
+                        className="group relative bg-gradient-to-br from-gray-700/50 to-gray-800/50 backdrop-blur-sm rounded-xl p-6 hover:scale-105 transition-all duration-300 border border-gray-600/50 hover:border-purple-500/50 shadow-lg hover:shadow-purple-500/25"
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-semibold mb-2">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold mb-3 text-white group-hover:text-purple-300 transition-colors">
                               {tournament.name}
-                              <span className="ml-2 text-sm font-mono px-2 py-1 rounded bg-gray-900/60 border border-gray-700 text-yellow-300 align-middle">
+                              <span className="ml-3 text-sm font-mono px-3 py-1 rounded-full bg-gray-900/60 border border-gray-700 text-yellow-300 align-middle">
                                 {getParticipantCount(tournament)}/
-                                {tournament.participantCount},{" "}
-                                {tournament.status}
+                                {tournament.participantCount}
                               </span>
                             </h3>
-                            <p className="text-gray-300 text-sm">
+                            <p className="text-gray-300 text-sm font-medium">
                               {tournament.danceStyle}
                             </p>
                           </div>
                           <span
-                            className={`text-sm font-medium ${getStatusColor(
-                              tournament
-                            )}`}
+                            className={`text-sm font-bold px-3 py-1 rounded-full ${
+                              tournament.status === "ACTIVE"
+                                ? "bg-green-600/20 text-green-400 border border-green-500/30"
+                                : isTournamentFull(tournament)
+                                ? "bg-yellow-600/20 text-yellow-400 border border-yellow-500/30"
+                                : "bg-blue-600/20 text-blue-400 border border-blue-500/30"
+                            }`}
                           >
                             {getStatusText(tournament)}
                           </span>
                         </div>
 
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-gray-400 mb-2">
-                            <span>Participants</span>
-                            <span>
+                        <div className="mb-6">
+                          <div className="flex justify-between text-sm text-gray-400 mb-3">
+                            <span className="font-medium">Participants</span>
+                            <span className="font-bold">
                               {getParticipantCount(tournament)}/
                               {tournament.participantCount}
                             </span>
                           </div>
-                          <div className="w-full bg-gray-600 rounded-full h-2">
+                          <div className="w-full bg-gray-600/50 rounded-full h-3 backdrop-blur-sm">
                             <div
-                              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 shadow-lg"
                               style={{
                                 width: `${
                                   (getParticipantCount(tournament) /
@@ -172,15 +185,15 @@ export default function TournamentsPage() {
                           </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <button
                             onClick={() =>
                               router.push(`/tournament/${tournament.id}`)
                             }
-                            className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
+                            className={`w-full py-4 px-6 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg ${
                               isTournamentFull(tournament)
-                                ? "bg-gray-500 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700"
+                                ? "bg-gray-500 cursor-not-allowed opacity-50"
+                                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-blue-500/25"
                             }`}
                             disabled={isTournamentFull(tournament)}
                           >
@@ -193,7 +206,7 @@ export default function TournamentsPage() {
                             onClick={() =>
                               router.push(`/judge/${tournament.id}`)
                             }
-                            className="w-full py-3 px-4 rounded-lg font-semibold transition-colors bg-purple-600 hover:bg-purple-700"
+                            className="w-full py-4 px-6 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:shadow-purple-500/25"
                           >
                             Judge Tournament
                           </button>

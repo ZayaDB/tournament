@@ -52,7 +52,6 @@ export default function JudgePanelPage({
   const [finishingScoring, setFinishingScoring] = useState(false);
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [voting, setVoting] = useState(false);
-  const [matches, setMatches] = useState<Match[]>([]);
   const router = useRouter();
 
   const fetchJudgeData = useCallback(
@@ -62,15 +61,6 @@ export default function JudgePanelPage({
         if (response.ok) {
           const data = await response.json();
           setJudge(data.judge);
-
-          // Fetch all matches for the tournament
-          const matchesResponse = await fetch(
-            `/api/tournaments/${data.judge.tournament.id}/matches`
-          );
-          if (matchesResponse.ok) {
-            const allMatches = await matchesResponse.json();
-            setMatches(allMatches);
-          }
 
           // Fetch current match if tournament is ACTIVE
           if (data.judge.tournament.status === "ACTIVE") {
@@ -203,10 +193,7 @@ export default function JudgePanelPage({
   const handleVote = async (participantId: string) => {
     if (!judge || !currentMatch) return;
 
-    let confirmMessage =
-      participantId === "tie"
-        ? "무승부(Tie)로 투표하시겠습니까?"
-        : "이 참가자를 승자로 선택하시겠습니까?";
+    let confirmMessage = participantId === "tie" ? "vote tie?" : "vote winner?";
 
     if (!confirm(confirmMessage)) {
       return;
@@ -227,15 +214,15 @@ export default function JudgePanelPage({
       });
 
       if (response.ok) {
-        alert("투표가 완료되었습니다.");
+        alert("vote success.");
         fetchJudgeData(judge.id);
       } else {
         const error = await response.json();
-        alert(error.message || "투표 중 오류가 발생했습니다.");
+        alert(error.message || "vote failed.");
       }
     } catch (error) {
       console.error("Error voting:", error);
-      alert("투표 중 오류가 발생했습니다.");
+      alert("vote failed.");
     } finally {
       setVoting(false);
     }
@@ -301,47 +288,6 @@ export default function JudgePanelPage({
             </button>
           </div>
         </div>
-
-        {/* Match List Section */}
-        {matches.length > 0 && (
-          <div className="mb-8 bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">All Matches</h2>
-            <div className="space-y-2">
-              {matches.map((match) => (
-                <div
-                  key={match.id}
-                  className={`flex items-center justify-between p-3 rounded-lg ${
-                    currentMatch && currentMatch.id === match.id
-                      ? "bg-blue-900/40"
-                      : "bg-gray-700"
-                  }`}
-                >
-                  <div>
-                    <span className="font-semibold">
-                      Round {match.round} - Match {match.matchNumber}
-                    </span>
-                    {match.participants.length === 2 && (
-                      <span className="ml-2 text-sm text-gray-300">
-                        {match.participants[0].name} vs{" "}
-                        {match.participants[1].name}
-                      </span>
-                    )}
-                    {match.winnerId && (
-                      <span className="ml-2 text-green-400">(완료)</span>
-                    )}
-                  </div>
-                  <button
-                    className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-xs font-semibold transition-colors"
-                    disabled={!!match.winnerId}
-                    onClick={() => setCurrentMatch(match)}
-                  >
-                    심사하기
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Score Submission */}

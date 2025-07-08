@@ -78,22 +78,12 @@ export async function POST(request: Request) {
 
       // If all judges voted for tie
       if (tieVotes === totalJudges) {
-        // For tie, create a rematch with the same participants
-        const rematch = await prisma.match.create({
-          data: {
-            round: match.round + 1, // 다음 라운드로 생성
-            matchNumber: 1, // rematch는 항상 1번으로(혹은 필요시 기존 로직 유지)
-            tournamentId: match.tournamentId,
-            participants: {
-              connect: match.participants.map((p) => ({ id: p.id })),
-            },
-          },
-        });
+        // For tie, we don't set a winner (winnerId remains null)
+        // This indicates a tie situation
         return NextResponse.json({
           success: true,
           result: "tie",
-          message: "All judges voted for tie. Rematch created.",
-          rematchId: rematch.id,
+          message: "All judges voted for tie",
         });
       }
 
@@ -107,7 +97,7 @@ export async function POST(request: Request) {
 
       // Find the winner (participant with most votes)
       let maxVotes = 0;
-      let winnerId: string | null = null;
+      let winnerId = null;
 
       Object.entries(voteCount).forEach(([participantId, count]) => {
         if (count > maxVotes) {
@@ -136,18 +126,16 @@ export async function POST(request: Request) {
             where: {
               round: currentMatch.round + 1,
               tournamentId: currentMatch.tournamentId,
-              matchNumber: Math.ceil(currentMatch.matchNumber / 2),
             },
             include: { participants: true },
           });
 
           if (nextRoundMatch) {
-            // winner만 남기고 나머지 참가자는 disconnect (set)
             await prisma.match.update({
               where: { id: nextRoundMatch.id },
               data: {
                 participants: {
-                  set: [{ id: winnerId }],
+                  connect: [{ id: winnerId }],
                 },
               },
             });

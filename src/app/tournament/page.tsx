@@ -45,8 +45,13 @@ export default function TournamentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8 flex items-center justify-center">
-        <div className="text-2xl">Loading tournament...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-float">🎭</div>
+          <div className="text-2xl font-bold dance-gradient-text">
+            Loading tournament...
+          </div>
+        </div>
       </div>
     );
   }
@@ -54,45 +59,54 @@ export default function TournamentPage() {
   const maxRound = Math.max(...matches.map((m) => m.round));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8 overflow-x-auto">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        Tournament Bracket
-      </h1>
-      <div className="flex gap-8 justify-start min-w-max p-4">
-        {Array.from({ length: maxRound }, (_, i) => i + 1).map((round) => (
-          <div key={round} className="flex flex-col gap-8">
-            <h2 className="text-xl font-semibold text-center">Round {round}</h2>
-            {getMatchesByRound(round).map((match) => (
-              <div
-                key={match.id}
-                className="w-64 bg-gray-800 rounded-lg overflow-hidden shadow-lg"
-              >
-                {match.participants.map((participant, idx) => (
-                  <div
-                    key={participant.id}
-                    className={`p-4 flex items-center gap-3 ${
-                      idx === 0 ? "bg-red-900/30" : "bg-blue-900/30"
-                    } ${
-                      match.winnerId === participant.id
-                        ? "border-2 border-yellow-500"
-                        : ""
-                    }`}
-                  >
-                    <div className="w-10 h-10 relative rounded-full overflow-hidden">
-                      <Image
-                        src={participant.imageUrl}
-                        alt={participant.name}
-                        fill
-                        className="object-cover"
-                      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white p-8 overflow-x-auto">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-5xl font-black mb-8 text-center dance-gradient-text tracking-tight">
+          Tournament Bracket
+        </h1>
+        <div className="flex gap-8 justify-start min-w-max p-4">
+          {Array.from({ length: maxRound }, (_, i) => i + 1).map((round) => (
+            <div key={round} className="flex flex-col gap-8">
+              <h2 className="text-2xl font-bold text-center gradient-text">
+                Round {round}
+              </h2>
+              {getMatchesByRound(round).map((match) => (
+                <div
+                  key={match.id}
+                  className="w-72 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:scale-105"
+                >
+                  {match.participants.map((participant, idx) => (
+                    <div
+                      key={participant.id}
+                      className={`p-4 flex items-center gap-4 ${
+                        idx === 0 ? "bg-red-900/30" : "bg-blue-900/30"
+                      } ${
+                        match.winnerId === participant.id
+                          ? "border-l-4 border-yellow-400 bg-yellow-900/20"
+                          : ""
+                      } transition-all duration-300`}
+                    >
+                      <div className="w-12 h-12 relative rounded-full overflow-hidden border-2 border-white/20 shadow-lg">
+                        <Image
+                          src={participant.imageUrl}
+                          alt={participant.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <span className="font-bold text-white">
+                        {participant.name}
+                      </span>
+                      {match.winnerId === participant.id && (
+                        <div className="ml-auto text-2xl">👑</div>
+                      )}
                     </div>
-                    <span className="font-medium">{participant.name}</span>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
